@@ -3,13 +3,15 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+    const { id } = await params
+
     const patient = await prisma.patient.findUnique({
-      where: { patientId: params.id },
+      where: { patientId: id },
       include: {
         appointments: { include: { doctor: { select: { name: true } } } },
         prescriptions: { include: { doctor: { select: { name: true } } } }

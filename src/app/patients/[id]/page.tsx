@@ -1,7 +1,7 @@
 "use client"
 
 import { useSession } from "next-auth/react"
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { FileText, Activity, Clock, Pill, Stethoscope, ChevronLeft } from "lucide-react"
 import Link from "next/link"
 
@@ -17,21 +17,25 @@ type EHRData = {
   allergies: string | null
   appointments: any[]
   prescriptions: any[]
+  error?: string
 }
 
-export default function EHRPage({ params }: { params: { id: string } }) {
+export default function EHRPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session } = useSession()
   const [data, setData] = useState<EHRData | null>(null)
   const [loading, setLoading] = useState(true)
+  
+  // Next.js 16 requires unwrapping params Promise in Client Components using React.use()
+  const { id } = React.use(params)
 
   useEffect(() => {
-    fetch(`/api/patients/${params.id}`)
+    fetch(`/api/patients/${id}`)
       .then(res => res.json())
       .then(d => {
         setData(d)
         setLoading(false)
       })
-  }, [params.id])
+  }, [id])
 
   if (!session) return null
   if (loading) return <div className="p-8 text-cyan-400">Loading Electronic Health Record...</div>
