@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("NURSE") // ADMIN, DOCTOR, NURSE
+  
+  // New Staff Fields
+  department String?
+  shiftStart String?
+  shiftEnd   String?
+  contactInfo String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  appointments Appointment[]
+  prescriptions Prescription[]
+}
+
+model Patient {
+  id             String       @id @default(cuid())
+  patientId      String       @unique
+  name           String
+  age            Int
+  gender         String
+  diagnosis      String
+  status         String       @default("monitoring")
+  departmentName String?
+  doctorName     String?
+  allergies      String?
+  bedId          String?      @unique
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  bed            Bed?         @relation(fields: [bedId], references: [id])
+  vitalSigns     VitalSign[]
+  appointments   Appointment[]
+  prescriptions  Prescription[]
+  invoices       Invoice[]
+}
+
+model Bed {
+  id             String   @id @default(cuid())
+  label          String   @unique
+  departmentName String
+  floor          Int
+  wing           String
+  status         String   @default("available")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  patient        Patient?
+}
+
+model VitalSign {
+  id          String   @id @default(cuid())
+  patientId   String
+  heartRate   Int
+  bloodPress  String
+  oxygenLevel Int
+  temperature Float
+  recordedAt  DateTime @default(now())
+
+  patient     Patient  @relation(fields: [patientId], references: [id])
+}
+
+// === NEW PHASE 2 MODELS ===
+
+model Appointment {
+  id        String   @id @default(cuid())
+  patientId String
+  doctorId  String
+  date      DateTime
+  reason    String
+  status    String   @default("scheduled") // scheduled, completed, cancelled
+  createdAt DateTime @default(now())
+
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  doctor    User     @relation(fields: [doctorId], references: [id])
+}
+
+model Prescription {
+  id             String   @id @default(cuid())
+  patientId      String
+  doctorId       String
+  medicationName String
+  dosage         String
+  frequency      String
+  duration       String
+  status         String   @default("active") // active, completed
+  createdAt      DateTime @default(now())
+
+  patient        Patient  @relation(fields: [patientId], references: [id])
+  doctor         User     @relation(fields: [doctorId], references: [id])
+}
+
+model InventoryItem {
+  id               String   @id @default(cuid())
+  itemName         String   @unique
+  category         String   // Medicine, Equipment, Supply
+  quantity         Int      @default(0)
+  minimumThreshold Int      @default(10)
+  lastRestocked    DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Invoice {
+  id                  String   @id @default(cuid())
+  patientId           String
+  totalAmount         Float
+  status              String   @default("pending") // pending, paid, overdue
+  insuranceClaimStatus String? // none, submitted, approved, rejected
+  dueDate             DateTime
+  createdAt           DateTime @default(now())
+
+  patient             Patient  @relation(fields: [patientId], references: [id])
+}

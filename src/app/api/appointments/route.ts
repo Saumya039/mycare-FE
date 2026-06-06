@@ -1,0 +1,54 @@
+import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const appointments = await prisma.appointment.findMany({
+      include: {
+        patient: { select: { name: true, patientId: true } },
+        doctor: { select: { name: true } }
+      },
+      orderBy: { date: "asc" }
+    })
+
+    return NextResponse.json(appointments)
+  } catch (error) {
+    console.error("Error fetching appointments:", error)
+    return NextResponse.json({ error: "Failed to fetch appointments" }, { status: 500 })
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "NURSE")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+
+    const { patientId, doctorId, date, reason } = await req.json()
+
+    // Find the real DB ID of the patient
+    const patient = await prisma.patient.findUnique({ where: { patientId } })
+    if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 })
+
+    const appointment = await prisma.appointment.create({
+      data: {
+        patientId: patient.id,
+        doctorId: doctorId,
+        date: new Date(date),
+        reason: reason,
+        status: "scheduled"
+      }
+    })
+
+    return NextResponse.json(appointment)
+  } catch (error) {
+    console.error("Error creating appointment:", error)
+    return NextResponse.json({ error: "Failed to create appointment" }, { status: 500 })
+  }
+}
