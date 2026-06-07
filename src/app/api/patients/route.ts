@@ -51,6 +51,16 @@ export async function POST(request: Request) {
         departmentName: body.departmentName,
         doctorName: body.doctorName,
         allergies: body.allergies || null,
+        
+        // Phase 3 additions
+        isMediclaimSecure: body.isMediclaimSecure === true || body.isMediclaimSecure === "true",
+        advanceMoneyTaken: body.advanceMoneyTaken ? parseFloat(body.advanceMoneyTaken) : 0,
+        isAyushmanBharat: body.isAyushmanBharat === true || body.isAyushmanBharat === "true",
+        insuranceCompany: body.insuranceCompany || null,
+        guardianName: body.guardianName || null,
+        guardianRelation: body.guardianRelation || null,
+        guardianPhone: body.guardianPhone || null,
+        guardianEmail: body.guardianEmail || null,
       },
     })
 

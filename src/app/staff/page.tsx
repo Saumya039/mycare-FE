@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useEffect, useState } from "react"
-import { Users, Phone, Clock, BriefcaseMedical } from "lucide-react"
+import { Users, Phone, Clock, BriefcaseMedical, Home, Plus } from "lucide-react"
 
 type Staff = {
   id: string
@@ -13,19 +13,23 @@ type Staff = {
   shiftStart: string | null
   shiftEnd: string | null
   contactInfo: string | null
+  homeAddress: string | null
 }
 
 export default function StaffPage() {
   const { data: session } = useSession()
   const [staffList, setStaffList] = useState<Staff[]>([])
   const [loading, setLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [shiftModalOpen, setShiftModalOpen] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
   
-  const [profileForm, setProfileForm] = useState({ departmentName: "", phone: "" })
+  const [profileForm, setProfileForm] = useState({ departmentName: "", contactInfo: "", homeAddress: "" })
   const [shiftForm, setShiftForm] = useState({ shiftStart: "", shiftEnd: "" })
+  const [addForm, setAddForm] = useState({ name: "", email: "", password: "", role: "DOCTOR", department: "Emergency", contactInfo: "", homeAddress: "" })
 
   const fetchStaff = () => {
     fetch("/api/staff")
@@ -43,38 +47,71 @@ export default function StaffPage() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedStaff) return
+    setIsSubmitting(true)
     try {
-      await fetch(`/api/staff/${selectedStaff.id}`, {
+      const res = await fetch(`/api/staff/${selectedStaff.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "profile", ...profileForm })
       })
-      setEditModalOpen(false)
-      fetchStaff()
+      if (res.ok) {
+        setEditModalOpen(false)
+        fetchStaff()
+      }
     } catch (err) {
       alert("Failed to update profile")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleUpdateShift = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedStaff) return
+    setIsSubmitting(true)
     try {
-      await fetch(`/api/staff/${selectedStaff.id}`, {
+      const res = await fetch(`/api/staff/${selectedStaff.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "shift", ...shiftForm })
       })
-      setShiftModalOpen(false)
-      fetchStaff()
+      if (res.ok) {
+        setShiftModalOpen(false)
+        fetchStaff()
+      }
     } catch (err) {
       alert("Failed to update shift")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleAddStaff = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    try {
+      const res = await fetch("/api/staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(addForm)
+      })
+      if (res.ok) {
+        setAddModalOpen(false)
+        setAddForm({ name: "", email: "", password: "", role: "DOCTOR", department: "Emergency", contactInfo: "", homeAddress: "" })
+        fetchStaff()
+      } else {
+        const err = await res.json()
+        alert(err.error || "Failed to add staff")
+      }
+    } catch (err) {
+      alert("Failed to add staff")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   if (!session) return null
 
-  // Function to check if a staff member is currently on shift based on time
   const isCurrentlyOnShift = (start: string | null, end: string | null) => {
     if (!start || !end) return false
     const now = new Date()
@@ -89,7 +126,6 @@ export default function StaffPage() {
     let endTime = endH + endM / 60
     
     if (endTime < startTime) {
-      // Overnight shift
       return currentTime >= startTime || currentTime <= endTime
     }
     return currentTime >= startTime && currentTime <= endTime
@@ -104,6 +140,16 @@ export default function StaffPage() {
           </h1>
           <p className="text-slate-400">Manage hospital personnel, roles, and shift schedules</p>
         </div>
+
+        {session.user.role === "ADMIN" && (
+          <button 
+            onClick={() => setAddModalOpen(true)}
+            className="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            Add Staff Member
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -122,7 +168,9 @@ export default function StaffPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg">{staff.name}</h3>
-                      <p className="text-xs text-slate-400">{staff.role} • {staff.department || "General"}</p>
+                      <p className="text-xs text-slate-400">
+                        {staff.role} • {staff.department || "General"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -143,14 +191,16 @@ export default function StaffPage() {
                   </div>
                   
                   <div className="flex items-center gap-3 text-sm text-slate-300">
-                    <BriefcaseMedical className="w-4 h-4 text-slate-500" />
-                    <span>{staff.department || "No department specified"}</span>
+                    <Phone className="w-4 h-4 text-slate-500" />
+                    <span className="truncate">{staff.contactInfo || staff.email}</span>
                   </div>
 
-                  <div className="flex items-center gap-3 text-sm text-slate-300">
-                    <Phone className="w-4 h-4 text-slate-500" />
-                    <span className="truncate">{staff.email}</span>
-                  </div>
+                  {staff.homeAddress && (
+                    <div className="flex items-start gap-3 text-sm text-slate-300">
+                      <Home className="w-4 h-4 text-slate-500 mt-0.5" />
+                      <span className="flex-1">{staff.homeAddress}</span>
+                    </div>
+                  )}
                 </div>
 
                 {session.user.role === "ADMIN" && (
@@ -158,7 +208,11 @@ export default function StaffPage() {
                     <button 
                       onClick={() => {
                         setSelectedStaff(staff)
-                        setProfileForm({ departmentName: staff.department || "", phone: "" })
+                        setProfileForm({ 
+                          departmentName: staff.department || "", 
+                          contactInfo: staff.contactInfo || "",
+                          homeAddress: staff.homeAddress || ""
+                        })
                         setEditModalOpen(true)
                       }}
                       className="flex-1 bg-slate-800 hover:bg-slate-700 py-2 rounded-lg text-xs font-medium text-slate-300 transition-colors"
@@ -183,9 +237,73 @@ export default function StaffPage() {
         </div>
       )}
 
+      {/* ADD STAFF MODAL */}
+      {addModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+              <h3 className="font-semibold text-lg">Add New Staff Member</h3>
+              <button onClick={() => setAddModalOpen(false)} className="text-slate-400 hover:text-slate-200">✕</button>
+            </div>
+            <form onSubmit={handleAddStaff} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Full Name</label>
+                  <input required type="text" value={addForm.name} onChange={(e) => setAddForm({...addForm, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Email (Login ID)</label>
+                  <input required type="email" value={addForm.email} onChange={(e) => setAddForm({...addForm, email: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Password</label>
+                  <input required type="password" value={addForm.password} onChange={(e) => setAddForm({...addForm, password: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Role</label>
+                  <select value={addForm.role} onChange={(e) => setAddForm({...addForm, role: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500">
+                    <option value="DOCTOR">Doctor</option>
+                    <option value="NURSE">Nurse</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Department</label>
+                  <select value={addForm.department} onChange={(e) => setAddForm({...addForm, department: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500">
+                    <option>Emergency</option>
+                    <option>ICU</option>
+                    <option>Cardiology</option>
+                    <option>Neurology</option>
+                    <option>Pediatrics</option>
+                    <option>General</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Phone Number</label>
+                  <input type="tel" value={addForm.contactInfo} onChange={(e) => setAddForm({...addForm, contactInfo: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Home Address</label>
+                <textarea rows={2} value={addForm.homeAddress} onChange={(e) => setAddForm({...addForm, homeAddress: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500 resize-none"></textarea>
+              </div>
+
+              <div className="pt-4 border-t border-slate-800 flex gap-3">
+                <button type="button" onClick={() => setAddModalOpen(false)} className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-medium">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-sm font-medium disabled:opacity-50">Create Account</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* EDIT PROFILE MODAL */}
       {editModalOpen && selectedStaff && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
             <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
               <h3 className="font-semibold text-lg">Edit Profile: {selectedStaff.name}</h3>
@@ -201,9 +319,27 @@ export default function StaffPage() {
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Phone Number</label>
+                <input 
+                  type="text" 
+                  value={profileForm.contactInfo}
+                  onChange={(e) => setProfileForm({...profileForm, contactInfo: e.target.value})}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Home Address</label>
+                <textarea 
+                  rows={2}
+                  value={profileForm.homeAddress}
+                  onChange={(e) => setProfileForm({...profileForm, homeAddress: e.target.value})}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500 resize-none"
+                ></textarea>
+              </div>
               <div className="pt-4 border-t border-slate-800 flex gap-3">
                 <button type="button" onClick={() => setEditModalOpen(false)} className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-medium">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-sm font-medium">Save Profile</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-sm font-medium disabled:opacity-50">Save Profile</button>
               </div>
             </form>
           </div>
@@ -212,7 +348,7 @@ export default function StaffPage() {
 
       {/* CHANGE SHIFT MODAL */}
       {shiftModalOpen && selectedStaff && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
             <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
               <h3 className="font-semibold text-lg">Change Shift: {selectedStaff.name}</h3>
@@ -243,7 +379,7 @@ export default function StaffPage() {
               </div>
               <div className="pt-4 border-t border-slate-800 flex gap-3">
                 <button type="button" onClick={() => setShiftModalOpen(false)} className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-medium">Cancel</button>
-                <button type="submit" className="flex-1 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-sm font-medium">Save Shift</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-sm font-medium disabled:opacity-50">Save Shift</button>
               </div>
             </form>
           </div>

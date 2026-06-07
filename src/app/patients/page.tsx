@@ -2,8 +2,9 @@
 
 import { useSession } from "next-auth/react"
 import { useEffect, useState } from "react"
-import { Activity, Plus, Search, User as UserIcon, X, Loader2 } from "lucide-react"
+import { Activity, Plus, Search, User as UserIcon, X, Loader2, Eye, ShieldAlert } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 type Patient = {
   id: string
@@ -16,12 +17,33 @@ type Patient = {
   departmentName: string
 }
 
+const topInsuranceCompanies = [
+  "Star Health and Allied Insurance",
+  "HDFC ERGO General Insurance",
+  "ICICI Lombard General Insurance",
+  "Niva Bupa Health Insurance",
+  "Care Health Insurance",
+  "Aditya Birla Health Insurance",
+  "New India Assurance",
+  "Oriental Insurance",
+  "National Insurance",
+  "United India Insurance",
+  "SBI General Insurance",
+  "Tata AIG General Insurance",
+  "Bajaj Allianz General Insurance",
+  "Reliance General Insurance",
+  "ManipalCigna Health Insurance",
+  "Other (Specify)"
+]
+
 export default function PatientsPage() {
   const { data: session } = useSession()
+  const router = useRouter()
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formStep, setFormStep] = useState(1)
 
   // Form State
   const [formData, setFormData] = useState({
@@ -30,7 +52,17 @@ export default function PatientsPage() {
     gender: "Male",
     departmentName: "Emergency",
     diagnosis: "",
-    status: "monitoring"
+    status: "monitoring",
+    allergies: "",
+    isMediclaimSecure: false,
+    advanceMoneyTaken: "",
+    isAyushmanBharat: false,
+    insuranceCompany: "",
+    insuranceCompanyOther: "",
+    guardianName: "",
+    guardianRelation: "",
+    guardianPhone: "",
+    guardianEmail: ""
   })
 
   const fetchPatients = () => {
@@ -53,14 +85,24 @@ export default function PatientsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (formStep === 1) {
+      setFormStep(2)
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
+      const finalInsurance = formData.insuranceCompany === "Other (Specify)" 
+        ? formData.insuranceCompanyOther 
+        : formData.insuranceCompany;
+
       const res = await fetch("/api/patients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          insuranceCompany: finalInsurance,
           age: parseInt(formData.age),
           doctorName: session?.user.name
         })
@@ -68,7 +110,12 @@ export default function PatientsPage() {
 
       if (res.ok) {
         setIsModalOpen(false)
-        setFormData({ name: "", age: "", gender: "Male", departmentName: "Emergency", diagnosis: "", status: "monitoring" })
+        setFormStep(1)
+        setFormData({ 
+          name: "", age: "", gender: "Male", departmentName: "Emergency", diagnosis: "", status: "monitoring", allergies: "",
+          isMediclaimSecure: false, advanceMoneyTaken: "", isAyushmanBharat: false, insuranceCompany: "", insuranceCompanyOther: "",
+          guardianName: "", guardianRelation: "", guardianPhone: "", guardianEmail: ""
+        })
         fetchPatients()
       } else {
         alert("Failed to admit patient. Ensure you have the correct permissions.")
@@ -83,7 +130,7 @@ export default function PatientsPage() {
   if (!session) return null
 
   return (
-    <div className="p-8 h-full bg-slate-950 text-slate-100 relative">
+    <div className="p-8 h-full bg-slate-950 text-slate-100 relative overflow-y-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">Patient Directory</h1>
@@ -92,7 +139,7 @@ export default function PatientsPage() {
 
         {(session.user.role === "ADMIN" || session.user.role === "DOCTOR") && (
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => { setIsModalOpen(true); setFormStep(1); }}
             className="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all"
           >
             <Plus className="w-5 h-5" />
@@ -122,7 +169,7 @@ export default function PatientsPage() {
                 <th className="p-4 font-medium">Diagnosis</th>
                 <th className="p-4 font-medium">Department</th>
                 <th className="p-4 font-medium">Status</th>
-                <th className="p-4 font-medium">Actions</th>
+                <th className="p-4 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
@@ -145,7 +192,7 @@ export default function PatientsPage() {
                       </div>
                     </td>
                     <td className="p-4 text-slate-400 text-sm font-mono">{p.patientId}</td>
-                    <td className="p-4 text-sm">{p.diagnosis}</td>
+                    <td className="p-4 text-sm truncate max-w-[150px]">{p.diagnosis}</td>
                     <td className="p-4 text-sm text-slate-400">{p.departmentName || "Unassigned"}</td>
                     <td className="p-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium border
@@ -155,8 +202,15 @@ export default function PatientsPage() {
                         {p.status.toUpperCase()}
                       </span>
                     </td>
-                    <td className="p-4">
-                      <button className="text-cyan-400 hover:text-cyan-300 text-sm font-medium">View Detail</button>
+                    <td className="p-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          onClick={() => router.push(`/patients/${p.patientId}`)}
+                          className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-cyan-400 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> View Details
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -166,69 +220,151 @@ export default function PatientsPage() {
         </div>
       </div>
 
-      {/* Admit Patient Modal */}
+      {/* Admit Patient Modal (Multi-step) */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
             <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/80">
-              <h3 className="text-lg font-semibold">Admit New Patient</h3>
+              <h3 className="text-lg font-semibold">Admit New Patient (Step {formStep} of 2)</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-200">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-400 ml-1">Full Name</label>
-                  <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-400 ml-1">Age</label>
-                  <input required type="number" min="0" value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none" />
-                </div>
-              </div>
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              {formStep === 1 ? (
+                <>
+                  {/* STEP 1: Medical & Basic Details */}
+                  <h4 className="text-cyan-400 text-sm font-medium border-b border-slate-800 pb-2 mb-4">Medical Profile</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-400 ml-1">Full Name</label>
+                      <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-400 ml-1">Age</label>
+                      <input required type="number" min="0" value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none" />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-400 ml-1">Gender</label>
-                  <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none text-slate-100">
-                    <option>Male</option>
-                    <option>Female</option>
-                    <option>Other</option>
-                  </select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-400 ml-1">Gender</label>
+                      <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none text-slate-100">
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-400 ml-1">Department</label>
+                      <select value={formData.departmentName} onChange={e => setFormData({...formData, departmentName: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none text-slate-100">
+                        <option>Emergency</option>
+                        <option>ICU</option>
+                        <option>Cardiology</option>
+                        <option>Neurology</option>
+                        <option>Pediatrics</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-400 ml-1">Primary Diagnosis</label>
+                    <input required type="text" value={formData.diagnosis} onChange={e => setFormData({...formData, diagnosis: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none" placeholder="e.g. Acute Myocardial Infarction" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-400 ml-1">Initial Status</label>
+                    <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none text-slate-100">
+                      <option value="monitoring">Monitoring (Standard)</option>
+                      <option value="stable">Stable</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-slate-400 ml-1">Allergies (Optional)</label>
+                    <input type="text" value={formData.allergies} onChange={e => setFormData({...formData, allergies: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none" placeholder="e.g. Penicillin, Peanuts" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* STEP 2: Financial & Guardian Details */}
+                  <h4 className="text-emerald-400 text-sm font-medium border-b border-slate-800 pb-2 mb-4 mt-2">Financial & Insurance Details</h4>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <label className="flex items-center gap-2 p-3 rounded-lg border border-slate-800 bg-slate-950 cursor-pointer hover:border-emerald-500/50">
+                      <input type="checkbox" checked={formData.isMediclaimSecure} onChange={e => setFormData({...formData, isMediclaimSecure: e.target.checked})} className="w-4 h-4 accent-emerald-500" />
+                      <span className="text-sm">Mediclaim Secure</span>
+                    </label>
+                    <label className="flex items-center gap-2 p-3 rounded-lg border border-slate-800 bg-slate-950 cursor-pointer hover:border-emerald-500/50">
+                      <input type="checkbox" checked={formData.isAyushmanBharat} onChange={e => setFormData({...formData, isAyushmanBharat: e.target.checked})} className="w-4 h-4 accent-emerald-500" />
+                      <span className="text-sm">Ayushman Bharat Covered</span>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-400 ml-1">Advance Money Collected (₹)</label>
+                      <input type="number" min="0" value={formData.advanceMoneyTaken} onChange={e => setFormData({...formData, advanceMoneyTaken: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none" placeholder="0.00" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-400 ml-1">Insurance Company</label>
+                      <select value={formData.insuranceCompany} onChange={e => setFormData({...formData, insuranceCompany: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none text-slate-100">
+                        <option value="">None / Self-Pay</option>
+                        {topInsuranceCompanies.map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  {formData.insuranceCompany === "Other (Specify)" && (
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-400 ml-1">Specify Insurance Company</label>
+                      <input required type="text" value={formData.insuranceCompanyOther} onChange={e => setFormData({...formData, insuranceCompanyOther: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 outline-none" />
+                    </div>
+                  )}
+
+                  <h4 className="text-purple-400 text-sm font-medium border-b border-slate-800 pb-2 mb-4 mt-6">Responsible Person / Guardian</h4>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-400 ml-1">Guardian Name</label>
+                      <input type="text" required value={formData.guardianName} onChange={e => setFormData({...formData, guardianName: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-purple-500 outline-none" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-400 ml-1">Relationship to Patient</label>
+                      <input type="text" required value={formData.guardianRelation} onChange={e => setFormData({...formData, guardianRelation: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-purple-500 outline-none" placeholder="e.g. Father, Spouse" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-400 ml-1">Phone Number</label>
+                      <input type="tel" required value={formData.guardianPhone} onChange={e => setFormData({...formData, guardianPhone: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-purple-500 outline-none" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-slate-400 ml-1">Email Address (Optional)</label>
+                      <input type="email" value={formData.guardianEmail} onChange={e => setFormData({...formData, guardianEmail: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-purple-500 outline-none" />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div className="pt-6 border-t border-slate-800 flex justify-between">
+                {formStep === 2 ? (
+                  <button type="button" onClick={() => setFormStep(1)} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 bg-slate-800 rounded-xl">Back</button>
+                ) : (
+                  <div></div> // spacer
+                )}
+                
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Cancel</button>
+                  <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-6 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50">
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (formStep === 1 ? "Next: Guardian & Finance" : "Complete Admission")}
+                  </button>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-400 ml-1">Department</label>
-                  <select value={formData.departmentName} onChange={e => setFormData({...formData, departmentName: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none text-slate-100">
-                    <option>Emergency</option>
-                    <option>ICU</option>
-                    <option>Cardiology</option>
-                    <option>Neurology</option>
-                    <option>Pediatrics</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 ml-1">Primary Diagnosis</label>
-                <input required type="text" value={formData.diagnosis} onChange={e => setFormData({...formData, diagnosis: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none" placeholder="e.g. Acute Myocardial Infarction" />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 ml-1">Initial Status</label>
-                <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none text-slate-100">
-                  <option value="monitoring">Monitoring (Standard)</option>
-                  <option value="stable">Stable</option>
-                  <option value="critical">Critical</option>
-                </select>
-              </div>
-
-              <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-6 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50">
-                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Admit Patient"}
-                </button>
               </div>
             </form>
           </div>

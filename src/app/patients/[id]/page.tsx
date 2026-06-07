@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import React, { useEffect, useState } from "react"
-import { FileText, Activity, Clock, Pill, Stethoscope, ChevronLeft } from "lucide-react"
+import { FileText, Activity, Clock, Pill, Stethoscope, ChevronLeft, Shield, Users, CalendarDays, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 
 type EHRData = {
@@ -17,6 +17,15 @@ type EHRData = {
   allergies: string | null
   appointments: any[]
   prescriptions: any[]
+  dischargeEta: string | null
+  isMediclaimSecure: boolean
+  advanceMoneyTaken: number
+  isAyushmanBharat: boolean
+  insuranceCompany: string | null
+  guardianName: string | null
+  guardianRelation: string | null
+  guardianPhone: string | null
+  guardianEmail: string | null
   error?: string
 }
 
@@ -24,18 +33,44 @@ export default function EHRPage({ params }: { params: Promise<{ id: string }> })
   const { data: session } = useSession()
   const [data, setData] = useState<EHRData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isUpdatingEta, setIsUpdatingEta] = useState(false)
+  const [newEta, setNewEta] = useState("")
   
   // Next.js 16 requires unwrapping params Promise in Client Components using React.use()
   const { id } = React.use(params)
 
-  useEffect(() => {
+  const fetchData = () => {
     fetch(`/api/patients/${id}`)
       .then(res => res.json())
       .then(d => {
         setData(d)
         setLoading(false)
       })
+  }
+
+  useEffect(() => {
+    fetchData()
   }, [id])
+
+  const handleUpdateEta = async () => {
+    try {
+      setIsUpdatingEta(true)
+      const res = await fetch(`/api/patients/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dischargeEta: newEta })
+      })
+      if (res.ok) {
+        fetchData()
+      } else {
+        alert("Failed to update ETA.")
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setIsUpdatingEta(false)
+    }
+  }
 
   if (!session) return null
   if (loading) return <div className="p-8 text-cyan-400">Loading Electronic Health Record...</div>
@@ -64,7 +99,7 @@ export default function EHRPage({ params }: { params: Promise<{ id: string }> })
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         
         {/* Left Col: Vitals & History */}
         <div className="lg:col-span-2 space-y-6">
@@ -72,8 +107,8 @@ export default function EHRPage({ params }: { params: Promise<{ id: string }> })
             <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 border-b border-slate-800 pb-2 text-slate-200">
               <Stethoscope className="w-5 h-5 text-cyan-400" /> Medical Profile
             </h2>
-            <div className="grid grid-cols-2 gap-6">
-              <div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="col-span-2 md:col-span-1">
                 <p className="text-sm text-slate-500 mb-1">Current Diagnosis</p>
                 <p className="font-medium text-slate-200">{data.diagnosis}</p>
               </div>
@@ -81,18 +116,68 @@ export default function EHRPage({ params }: { params: Promise<{ id: string }> })
                 <p className="text-sm text-slate-500 mb-1">Attending Physician</p>
                 <p className="font-medium text-slate-200">{data.doctorName || "Unassigned"}</p>
               </div>
-              <div className="col-span-2">
+              <div>
                 <p className="text-sm text-slate-500 mb-1">Known Allergies</p>
-                <div className="flex gap-2 mt-1">
+                <div className="flex flex-wrap gap-2 mt-1">
                   {data.allergies ? data.allergies.split(",").map(a => (
                     <span key={a} className="bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1 rounded-full text-xs font-medium">
                       {a.trim()}
                     </span>
                   )) : (
-                    <span className="text-slate-400 text-sm">No known allergies.</span>
+                    <span className="text-slate-400 text-sm">None</span>
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl p-6">
+              <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 border-b border-slate-800 pb-2 text-slate-200">
+                <Shield className="w-5 h-5 text-emerald-400" /> Insurance & Finance
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className={`w-4 h-4 ${data.isMediclaimSecure ? 'text-emerald-400' : 'text-slate-600'}`} />
+                  <span className="text-sm text-slate-300">Mediclaim Secure</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className={`w-4 h-4 ${data.isAyushmanBharat ? 'text-emerald-400' : 'text-slate-600'}`} />
+                  <span className="text-sm text-slate-300">Ayushman Bharat</span>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Insurance Provider</p>
+                  <p className="text-sm font-medium">{data.insuranceCompany || "Self-Pay / None"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500 mb-1">Advance Collected</p>
+                  <p className="text-sm font-mono text-emerald-400">₹{data.advanceMoneyTaken.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl p-6">
+              <h2 className="text-lg font-semibold flex items-center gap-2 mb-4 border-b border-slate-800 pb-2 text-slate-200">
+                <Users className="w-5 h-5 text-purple-400" /> Guardian Details
+              </h2>
+              {data.guardianName ? (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Name & Relation</p>
+                    <p className="text-sm font-medium">{data.guardianName} <span className="text-slate-400 font-normal">({data.guardianRelation || "Unknown"})</span></p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Contact Phone</p>
+                    <p className="text-sm font-mono">{data.guardianPhone || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1">Email</p>
+                    <p className="text-sm">{data.guardianEmail || "N/A"}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">No guardian information provided.</p>
+              )}
             </div>
           </div>
 
@@ -130,17 +215,54 @@ export default function EHRPage({ params }: { params: Promise<{ id: string }> })
           </div>
 
           <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl p-6">
+            <h3 className="font-semibold mb-4 border-b border-slate-800 pb-2 flex items-center justify-between">
+              <span className="flex items-center gap-2"><CalendarDays className="w-5 h-5 text-blue-400" /> Discharge ETA</span>
+            </h3>
+            {data.dischargeEta ? (
+              <div className="mb-4">
+                <p className="text-2xl font-bold text-slate-100">{new Date(data.dischargeEta).toLocaleDateString()}</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {Math.ceil((new Date(data.dischargeEta).getTime() - new Date().getTime()) / (1000 * 3600 * 24))} days remaining
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 mb-4">No discharge ETA set by doctor.</p>
+            )}
+            
+            {(session.user.role === "ADMIN" || session.user.role === "DOCTOR") && (
+              <div className="flex gap-2">
+                <input 
+                  type="date" 
+                  value={newEta}
+                  onChange={(e) => setNewEta(e.target.value)}
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none" 
+                />
+                <button 
+                  onClick={handleUpdateEta}
+                  disabled={isUpdatingEta || !newEta}
+                  className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+                >
+                  {isUpdatingEta ? "..." : "Update"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl p-6">
             <h3 className="font-semibold mb-4 border-b border-slate-800 pb-2 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-purple-400" /> History
+              <Clock className="w-5 h-5 text-purple-400" /> History & Appointments
             </h3>
             {data.appointments.length === 0 ? (
               <p className="text-slate-500 text-sm">No past or upcoming appointments.</p>
             ) : (
               <div className="space-y-3">
                 {data.appointments.map((apt: any) => (
-                  <div key={apt.id} className="text-sm border-l-2 border-purple-500/50 pl-3 py-1">
-                    <p className="font-medium text-slate-300">{new Date(apt.date).toLocaleDateString()}</p>
-                    <p className="text-slate-500 text-xs mt-0.5">{apt.reason} • {apt.status}</p>
+                  <div key={apt.id} className="text-sm border-l-2 border-purple-500/50 pl-3 py-1 relative group">
+                    <p className="font-medium text-slate-300 flex justify-between">
+                      {new Date(apt.date).toLocaleDateString()}
+                      {apt.isFollowUp && <span className="bg-purple-500/20 text-purple-300 text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider">Follow-up</span>}
+                    </p>
+                    <p className="text-slate-500 text-xs mt-0.5">{apt.reason} • Dr. {apt.doctor?.name}</p>
                   </div>
                 ))}
               </div>

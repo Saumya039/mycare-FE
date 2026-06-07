@@ -19,6 +19,7 @@ model User {
   shiftStart String?
   shiftEnd   String?
   contactInfo String?
+  homeAddress String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -39,6 +40,18 @@ model Patient {
   doctorName     String?
   allergies      String?
   bedId          String?      @unique
+  
+  // Phase 3 Additions
+  dischargeEta       DateTime?
+  isMediclaimSecure  Boolean   @default(false)
+  advanceMoneyTaken  Float     @default(0)
+  isAyushmanBharat   Boolean   @default(false)
+  insuranceCompany   String?
+  guardianName       String?
+  guardianRelation   String?
+  guardianPhone      String?
+  guardianEmail      String?
+
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -83,6 +96,7 @@ model Appointment {
   date      DateTime
   reason    String
   status    String   @default("scheduled") // scheduled, completed, cancelled
+  isFollowUp Boolean @default(false)
   createdAt DateTime @default(now())
 
   patient   Patient  @relation(fields: [patientId], references: [id])

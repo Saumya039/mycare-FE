@@ -12,7 +12,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     const { id } = await params
     const body = await req.json()
-    const { action, shiftStart, shiftEnd, departmentName, phone } = body
+    const { action, shiftStart, shiftEnd, departmentName, contactInfo, homeAddress } = body
 
     if (action === "shift") {
       const updatedUser = await prisma.user.update({
@@ -24,7 +24,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     else if (action === "profile") {
       const updatedUser = await prisma.user.update({
         where: { id },
-        data: { department: departmentName, contactInfo: phone }
+        data: { department: departmentName, contactInfo, homeAddress }
       })
       return NextResponse.json(updatedUser)
     }

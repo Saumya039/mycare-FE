@@ -30,7 +30,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    const { patientId, doctorId, date, reason } = await req.json()
+    const body = await req.json()
+    const { patientId, doctorId, date, reason, isFollowUp } = body
 
     // Find the real DB ID of the patient
     const patient = await prisma.patient.findUnique({ where: { patientId } })
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
         doctorId: doctorId,
         date: new Date(date),
         reason: reason,
+        isFollowUp: isFollowUp || false,
         status: "scheduled"
       }
     })
