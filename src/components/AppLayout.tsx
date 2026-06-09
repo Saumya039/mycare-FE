@@ -16,6 +16,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   if (!session) return <>{children}</>
 
   const role = session.user.role
+  const isPortal = pathname.startsWith("/portal")
+
+  if (isPortal) {
+    return <>{children}</>
+  }
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden">
@@ -23,12 +28,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <aside className="w-64 border-r border-slate-800 bg-slate-900/50 flex flex-col">
         <div className="p-6 border-b border-slate-800">
           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
-            MyCare
+            Sevra Technologies
           </h1>
           <p className="text-xs text-slate-500 mt-1">Serva AI System</p>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <Link href="/" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
             <Activity className="w-5 h-5" /> Dashboard
           </Link>
@@ -52,6 +57,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>
               <Link href="/inventory" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/inventory" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
                 <Activity className="w-5 h-5" /> Pharmacy
+              </Link>
+              <Link href="/labs" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/labs" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
+                <Activity className="w-5 h-5" /> Labs & Diagnostics
+              </Link>
+              <Link href="/blood-bank" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/blood-bank" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
+                <Activity className="w-5 h-5" /> Blood Bank
+              </Link>
+              <Link href="/ambulances" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/ambulances" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
+                <Activity className="w-5 h-5" /> Ambulance Dispatch
               </Link>
               {role === "ADMIN" && (
                 <Link href="/billing" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/billing" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>

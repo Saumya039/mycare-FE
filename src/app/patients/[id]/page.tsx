@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react"
 import React, { useEffect, useState } from "react"
 import { FileText, Activity, Clock, Pill, Stethoscope, ChevronLeft, Shield, Users, CalendarDays, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 type EHRData = {
   patientId: string
@@ -29,12 +30,27 @@ type EHRData = {
   error?: string
 }
 
+const COMMON_MEDICATIONS = [
+  "Amoxicillin", "Azithromycin", "Paracetamol", "Ibuprofen", 
+  "Omeprazole", "Metformin", "Atorvastatin", "Losartan", 
+  "Amlodipine", "Levothyroxine", "Lisinopril", "Albuterol",
+  "Pantoprazole", "Gabapentin", "Sertraline", "Fluticasone",
+  "Ciprofloxacin", "Cephalexin", "Prednisone", "Montelukast",
+  "Aspirin", "Clopidogrel", "Hydrochlorothiazide", "Doxycycline"
+]
+
 export default function EHRPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session } = useSession()
+  const router = useRouter()
   const [data, setData] = useState<EHRData | null>(null)
   const [loading, setLoading] = useState(true)
   const [isUpdatingEta, setIsUpdatingEta] = useState(false)
   const [newEta, setNewEta] = useState("")
+
+  const [isPxModalOpen, setIsPxModalOpen] = useState(false)
+  const [isSubmittingPx, setIsSubmittingPx] = useState(false)
+  const [pxForm, setPxForm] = useState({ medicationName: "", dosage: "", frequency: "", duration: "" })
+  const [showSuggestions, setShowSuggestions] = useState(false)
   
   // Next.js 16 requires unwrapping params Promise in Client Components using React.use()
   const { id } = React.use(params)
@@ -46,6 +62,30 @@ export default function EHRPage({ params }: { params: Promise<{ id: string }> })
         setData(d)
         setLoading(false)
       })
+  }
+
+  const handleAddPx = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmittingPx(true)
+    try {
+      const res = await fetch("/api/prescriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...pxForm, patientId: data?.patientId })
+      })
+      if (res.ok) {
+        setIsPxModalOpen(false)
+        setPxForm({ medicationName: "", dosage: "", frequency: "", duration: "" })
+        fetchData()
+      } else {
+        const err = await res.json()
+        alert(err.error || "Failed to add prescription")
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsSubmittingPx(false)
+    }
   }
 
   useEffect(() => {
@@ -93,9 +133,20 @@ export default function EHRPage({ params }: { params: Promise<{ id: string }> })
         </div>
 
         {session.user.role === "DOCTOR" && (
-          <button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white px-5 py-2.5 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all font-medium flex items-center gap-2">
-            <Pill className="w-5 h-5" /> New Prescription
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => router.push('/labs')}
+              className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-5 py-2.5 rounded-xl transition-all font-medium flex items-center gap-2"
+            >
+              Order Lab Test
+            </button>
+            <button 
+              onClick={() => setIsPxModalOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white px-5 py-2.5 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all font-medium flex items-center gap-2"
+            >
+              <Pill className="w-5 h-5" /> New Prescription
+            </button>
+          </div>
         )}
       </div>
 
@@ -271,6 +322,88 @@ export default function EHRPage({ params }: { params: Promise<{ id: string }> })
         </div>
 
       </div>
+
+      {/* NEW PRESCRIPTION MODAL */}
+      {isPxModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+              <h3 className="font-semibold text-lg flex items-center gap-2">
+                <Pill className="w-5 h-5 text-cyan-400" /> New Prescription
+              </h3>
+              <button onClick={() => setIsPxModalOpen(false)} className="text-slate-400 hover:text-slate-200 transition-colors">✕</button>
+            </div>
+            <form onSubmit={handleAddPx} className="p-6 space-y-4">
+              <div className="relative">
+                <label className="block text-sm font-medium text-slate-400 mb-1">Medication Name (AI Assist)</label>
+                <input 
+                  type="text" required placeholder="Type to search e.g. Amo..."
+                  value={pxForm.medicationName} 
+                  onChange={(e) => {
+                    setPxForm({...pxForm, medicationName: e.target.value})
+                    setShowSuggestions(true)
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+                />
+                {showSuggestions && pxForm.medicationName.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                    {COMMON_MEDICATIONS.filter(m => m.toLowerCase().includes(pxForm.medicationName.toLowerCase())).length > 0 ? (
+                      COMMON_MEDICATIONS.filter(m => m.toLowerCase().includes(pxForm.medicationName.toLowerCase())).map(med => (
+                        <div 
+                          key={med}
+                          onClick={() => {
+                            setPxForm({...pxForm, medicationName: med});
+                            setShowSuggestions(false);
+                          }}
+                          className="px-4 py-2 hover:bg-slate-700 cursor-pointer text-slate-200 text-sm"
+                        >
+                          {med}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2 text-slate-400 text-sm italic">No AI suggestions found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Dosage</label>
+                  <input 
+                    type="text" required placeholder="e.g. 500mg"
+                    value={pxForm.dosage} onChange={(e) => setPxForm({...pxForm, dosage: e.target.value})}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-1">Frequency</label>
+                  <input 
+                    type="text" required placeholder="e.g. 2x a day"
+                    value={pxForm.frequency} onChange={(e) => setPxForm({...pxForm, frequency: e.target.value})}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-1">Duration</label>
+                <input 
+                  type="text" required placeholder="e.g. 7 days"
+                  value={pxForm.duration} onChange={(e) => setPxForm({...pxForm, duration: e.target.value})}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500"
+                />
+              </div>
+              
+              <div className="pt-4 border-t border-slate-800 flex gap-3">
+                <button type="button" onClick={() => setIsPxModalOpen(false)} className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-medium transition-colors">Cancel</button>
+                <button type="submit" disabled={isSubmittingPx} className="flex-1 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50">Issue Prescription</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

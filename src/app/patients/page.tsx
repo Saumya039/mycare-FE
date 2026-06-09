@@ -50,6 +50,7 @@ export default function PatientsPage() {
     name: "",
     age: "",
     gender: "Male",
+    symptoms: "",
     departmentName: "Emergency",
     diagnosis: "",
     status: "monitoring",
@@ -64,6 +65,49 @@ export default function PatientsPage() {
     guardianPhone: "",
     guardianEmail: ""
   })
+
+  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
+
+  const handleAiTriage = async () => {
+    if (!formData.symptoms) {
+      alert("Please enter symptoms first.");
+      return;
+    }
+    setIsAiAnalyzing(true);
+    // Simulate AI delay
+    await new Promise(r => setTimeout(r, 1500));
+    
+    const sym = formData.symptoms.toLowerCase();
+    let dept = "Emergency";
+    let diag = "Pending evaluation";
+    let status = "monitoring";
+
+    if (sym.includes("chest pain") || sym.includes("heart")) {
+      dept = "Cardiology";
+      diag = "Suspected Cardiac Event";
+      status = "critical";
+    } else if (sym.includes("headache") || sym.includes("stroke") || sym.includes("seizure")) {
+      dept = "Neurology";
+      diag = "Neurological Evaluation Needed";
+      status = "critical";
+    } else if (sym.includes("child") || sym.includes("baby") || sym.includes("infant")) {
+      dept = "Pediatrics";
+      diag = "Pediatric Assessment";
+      status = "stable";
+    } else if (sym.includes("fever") || sym.includes("cough")) {
+      dept = "Emergency";
+      diag = "Viral Infection";
+      status = "stable";
+    }
+
+    setFormData({
+      ...formData,
+      departmentName: dept,
+      diagnosis: diag,
+      status: status
+    });
+    setIsAiAnalyzing(false);
+  }
 
   const fetchPatients = () => {
     setLoading(true)
@@ -245,6 +289,27 @@ export default function PatientsPage() {
                       <label className="text-xs font-medium text-slate-400 ml-1">Age</label>
                       <input required type="number" min="0" value={formData.age} onChange={e => setFormData({...formData, age: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 outline-none" />
                     </div>
+                  </div>
+
+                  <div className="space-y-1 bg-blue-900/10 p-4 rounded-xl border border-blue-500/20 relative">
+                    <div className="flex justify-between items-end mb-2">
+                      <label className="text-xs font-medium text-blue-400">Patient Symptoms (AI Triage)</label>
+                      <button 
+                        type="button" 
+                        onClick={handleAiTriage}
+                        disabled={isAiAnalyzing}
+                        className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50"
+                      >
+                        {isAiAnalyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "🤖 AI Analyze"}
+                      </button>
+                    </div>
+                    <textarea 
+                      rows={2}
+                      value={formData.symptoms} 
+                      onChange={e => setFormData({...formData, symptoms: e.target.value})} 
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-blue-500 outline-none resize-none" 
+                      placeholder="Describe symptoms here... (e.g., severe chest pain and sweating)" 
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

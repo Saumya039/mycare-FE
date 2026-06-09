@@ -60,6 +60,7 @@ model Patient {
   appointments   Appointment[]
   prescriptions  Prescription[]
   invoices       Invoice[]
+  labTests       LabTest[]
 }
 
 model Bed {
@@ -138,4 +139,39 @@ model Invoice {
   createdAt           DateTime @default(now())
 
   patient             Patient  @relation(fields: [patientId], references: [id])
+}
+
+// === NEW PHASE 4 MODELS ===
+
+model LabTest {
+  id          String   @id @default(cuid())
+  patientId   String
+  testName    String
+  status      String   @default("pending") // pending, completed
+  resultText  String?
+  orderedBy   String?  // doctor user id
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  patient     Patient  @relation(fields: [patientId], references: [id])
+}
+
+model BloodBag {
+  id          String   @id @default(cuid())
+  bloodGroup  String   // A+, O-, etc.
+  volumeMl    Int      @default(450)
+  expiryDate  DateTime
+  status      String   @default("available") // available, used, expired
+  donatedAt   DateTime @default(now())
+}
+
+model Ambulance {
+  id           String   @id @default(cuid())
+  licensePlate String   @unique
+  driverName   String
+  phone        String
+  type         String   @default("Basic Life Support")
+  status       String   @default("available") // available, dispatched, arriving
+  lastLocation String?
+  updatedAt    DateTime @updatedAt
 }

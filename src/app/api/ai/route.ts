@@ -36,7 +36,7 @@ export async function POST(req: Request) {
       select: { patientId: true, date: true, reason: true, doctor: { select: { name: true } } }
     })
 
-    const systemPrompt = `You are Serva AI, the intelligent virtual assistant integrated into the MyCare Hospital Management System. 
+    const systemPrompt = `You are Serva AI, the intelligent virtual assistant integrated into the Sevra Technologies Hospital Management System. 
 You are currently talking to ${session.user.name}, who is a ${session.user.role}.
 Here is the LIVE data from the hospital database right now:
 - Total Beds: ${bedsCount}

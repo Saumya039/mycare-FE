@@ -5,7 +5,7 @@ import { Sparkles, X, Send, Bot, User as UserIcon, Loader2 } from "lucide-react"
 
 export function ServaAIPanel({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const [messages, setMessages] = useState<{role: 'user'|'ai', text: string}[]>([
-    { role: 'ai', text: "Hello. I am Serva AI, integrated directly into MyCare. I monitor live telemetry, patient records, and hospital capacity. How can I assist you?" }
+    { role: 'ai', text: "Hello. I am Serva AI, integrated directly into Sevra Technologies. I monitor live telemetry, patient records, and hospital capacity. How can I assist you?" }
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)

@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "MyCare Serva AI — Hospital Management",
+  title: "Sevra Technologies Serva AI — Hospital Management",
   description: "Next-generation intelligent hospital management system",
 }
 

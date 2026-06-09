@@ -35,11 +35,11 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-400 mb-1">Hospital Name</label>
-              <input type="text" defaultValue="MyCare Memorial Hospital" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500" />
+              <input type="text" defaultValue="Sevra Technologies Memorial Hospital" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-400 mb-1">Contact Email</label>
-              <input type="email" defaultValue="admin@mycare.com" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500" />
+              <input type="email" defaultValue="admin@Sevra Technologies.com" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-cyan-500" />
             </div>
             <div className="flex items-center justify-between pt-2">
               <span className="text-sm text-slate-300">Enable New Admissions</span>

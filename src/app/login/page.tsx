@@ -42,7 +42,7 @@ export default function LoginPage() {
             <Hospital className="w-8 h-8" />
           </div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
-            MyCare Serva AI
+            Sevra Technologies Serva AI
           </h1>
           <p className="text-slate-400 mt-2">Hospital Management System</p>
         </div>
@@ -69,7 +69,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 text-slate-100 placeholder-slate-600 transition-all outline-none"
-                  placeholder="admin@mycare.com"
+                  placeholder="admin@Sevra Technologies.com"
                   required
                 />
               </div>
@@ -103,11 +103,18 @@ export default function LoginPage() {
 
           <div className="mt-8 pt-6 border-t border-slate-800/50 text-center">
             <p className="text-sm text-slate-500 mb-2">Test Credentials:</p>
-            <div className="flex justify-center gap-4 text-xs text-slate-400">
-              <span>Admin: admin@mycare.com</span>
+            <div className="flex justify-center gap-4 text-xs text-slate-400 mb-6">
+              <span>Admin: admin@Sevra Technologies.com</span>
               <span>•</span>
               <span>Pass: password123</span>
             </div>
+            
+            <a 
+              href="/portal/login" 
+              className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+            >
+              Are you a patient? Go to the Patient Portal →
+            </a>
           </div>
         </div>
 
