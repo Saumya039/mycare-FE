@@ -1,9 +1,11 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "@/context/FirebaseAuthContext"
+import { signOut as firebaseSignOut } from "firebase/auth"
+import { auth } from "@/lib/firebase"
 import { LogOut, Activity, Users, Settings, ShieldAlert, Sparkles, Calendar, Sun, Moon } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 import { ServaAIPanel } from "./ServaAIPanel"
 import { useTheme } from "./ThemeProvider"
@@ -13,8 +15,16 @@ import Image from "next/image"
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const pathname = usePathname() || ""
+  const router = useRouter()
   const [isAIOpen, setIsAIOpen] = useState(false)
   const { theme, setTheme } = useTheme()
+
+  const handleSignOut = async () => {
+    if (auth) {
+      await firebaseSignOut(auth)
+    }
+    router.push("/login")
+  }
 
   if (status === "loading") {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Loading...</div>
@@ -100,7 +110,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <button 
-            onClick={() => signOut()}
+            onClick={handleSignOut}
             className="flex items-center justify-center gap-2 w-full py-2.5 text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
           >
             <LogOut className="w-4 h-4" /> Sign Out

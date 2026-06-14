@@ -47,10 +47,9 @@ async function main() {
         id: 'P-1005',
         name: 'Patient User',
         age: 30,
-        gender: 'Male',
-        phone: '1234567890',
-        bloodGroup: 'O+',
-        status: 'admitted',
+        gender: "Male",
+        patientId: "PAT-1005",
+        diagnosis: "Viral Fever"
       }
     })
     console.log(`Created Patient: P-1005`)

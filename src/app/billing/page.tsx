@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/FirebaseAuthContext"
 import { useEffect, useState } from "react"
 import { FileText, Plus, Search, IndianRupee, CheckCircle2, Clock, X, Loader2 } from "lucide-react"
 

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { getServerSession } from "@/lib/auth-server"
+
 import { prisma } from "@/lib/prisma"
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession()
   if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTANT"].includes(session.user.role as string)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
   }
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession()
   if (!session || !["SUPER_ADMIN", "ADMIN", "ACCOUNTANT"].includes(session.user.role as string)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
   }

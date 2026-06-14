@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/FirebaseAuthContext"
 import { useEffect, useState } from "react"
 import { FlaskConical, Search, Plus, Loader2, CheckCircle2 } from "lucide-react"
 

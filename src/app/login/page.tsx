@@ -1,6 +1,7 @@
 "use client"
 
-import { signIn } from "next-auth/react"
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { auth } from "@/lib/firebase"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -36,7 +37,7 @@ const itemVariants: any = {
 
 export default function LoginPage() {
  const router = useRouter()
- const [selectedPortal, setSelectedPortal] = useState<any>(null)
+ const [selectedPortal, setSelectedPortal] = useState<typeof portals[0] | null>(null)
  const [email, setEmail] = useState("")
  const [password, setPassword] = useState("")
  const [error, setError] = useState("")
@@ -65,20 +66,17 @@ export default function LoginPage() {
  setError("")
 
  try {
- const res = await signIn("credentials", {
- email,
- password,
- redirect: false,
- })
-
- if (res?.error) {
- setError("Invalid email or password")
- setLoading(false)
- } else {
- router.push("/")
+ if (!auth) {
+ throw new Error("Firebase auth not initialized")
  }
- } catch (err) {
- setError("An error occurred during login")
+ 
+ // Use Firebase Auth instead of NextAuth
+ await signInWithEmailAndPassword(auth, email.trim(), password.trim())
+ 
+ router.push("/")
+ } catch (err: any) {
+ console.error(err)
+ setError(err.message || "Invalid email or password")
  setLoading(false)
  }
  }

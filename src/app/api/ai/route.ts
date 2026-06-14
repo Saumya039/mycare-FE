@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "./../auth/[...nextauth]/route"
+import { getServerSession } from "@/lib/auth-server"
 import { prisma } from "@/lib/prisma"
 import { GoogleGenAI } from "@google/genai"
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession()
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     const { message } = await req.json()

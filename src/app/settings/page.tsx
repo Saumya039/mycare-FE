@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "next-auth/react"
+import { useSession } from "@/context/FirebaseAuthContext"
 import { Settings, Server, Database, Shield, Save } from "lucide-react"
 
 export default function SettingsPage() {
