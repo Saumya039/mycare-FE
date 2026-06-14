@@ -14,7 +14,19 @@ const firebaseConfig = {
 }
 
 // Initialize Firebase only if config exists to prevent crashing during build or if unconfigured
-const app = !getApps().length && firebaseConfig.apiKey ? initializeApp(firebaseConfig) : getApp()
+let app;
+try {
+  if (!getApps().length && firebaseConfig.apiKey) {
+    app = initializeApp(firebaseConfig)
+  } else if (getApps().length > 0) {
+    app = getApp()
+  } else {
+    app = null
+  }
+} catch (e) {
+  console.warn("Failed to initialize Firebase Client app:", e)
+  app = null
+}
 
 export const auth = app ? getAuth(app) : null
 export const db = app ? getFirestore(app) : null
