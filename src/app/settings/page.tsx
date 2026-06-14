@@ -6,7 +6,7 @@ import { Settings, Server, Database, Shield, Save } from "lucide-react"
 export default function SettingsPage() {
   const { data: session } = useSession()
 
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || !["ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
     return <div className="p-8 text-red-400">Unauthorized. Only Administrators can view System Configuration.</div>
   }
 

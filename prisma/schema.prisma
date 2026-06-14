@@ -12,7 +12,7 @@ model User {
   email     String   @unique
   password  String
   name      String
-  role      String   @default("NURSE") // ADMIN, DOCTOR, NURSE
+  role      String   @default("RECEPTIONIST") // SUPER_ADMIN, ADMIN, DOCTOR, ACCOUNTANT, RECEPTIONIST, PHARMACIST, PATHOLOGIST, RADIOLOGIST
   
   // New Staff Fields
   department String?
@@ -26,6 +26,12 @@ model User {
   
   appointments Appointment[]
   prescriptions Prescription[]
+  attendances Attendance[]
+  dutyRosters DutyRoster[]
+  leaveRequests LeaveRequest[]
+  sentMessages Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  referralsMade Referral[]
 }
 
 model Patient {
@@ -51,6 +57,9 @@ model Patient {
   guardianRelation   String?
   guardianPhone      String?
   guardianEmail      String?
+  
+  // Portal Security
+  portalPin          String?   @default("1234")
 
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -61,6 +70,8 @@ model Patient {
   prescriptions  Prescription[]
   invoices       Invoice[]
   labTests       LabTest[]
+  tpaClaims      TPAClaim[]
+  referrals      Referral[]
 }
 
 model Bed {
@@ -174,4 +185,159 @@ model Ambulance {
   status       String   @default("available") // available, dispatched, arriving
   lastLocation String?
   updatedAt    DateTime @updatedAt
+}
+
+// === NEW PHASE 3 MODELS (HR & OPERATIONS) ===
+
+model Attendance {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  clockIn   DateTime?
+  clockOut  DateTime?
+  status    String   @default("Present") // Present, Absent, Half-Day, On Leave
+  workHours Float?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model DutyRoster {
+  id         String   @id @default(cuid())
+  userId     String
+  shiftName  String   // Morning, Evening, Night
+  department String
+  wardOrFloor String?
+  date       DateTime
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model LeaveRequest {
+  id         String   @id @default(cuid())
+  userId     String
+  leaveType  String   // Sick, Casual, Paid
+  startDate  DateTime
+  endDate    DateTime
+  reason     String
+  status     String   @default("Pending") // Pending, Approved, Rejected
+  appliedAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model FrontOfficeVisitor {
+  id           String   @id @default(cuid())
+  visitorName  String
+  phone        String
+  purpose      String
+  whomToMeet   String
+  checkInTime  DateTime @default(now())
+  checkOutTime DateTime?
+  status       String   @default("Active") // Active, Checked-Out
+}
+
+// === NEW PHASE 4 MODELS (EXTENDED ENTERPRISE) ===
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  isRead     Boolean  @default(false)
+  timestamp  DateTime @default(now())
+
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+model TPAClaim {
+  id               String   @id @default(cuid())
+  patientId        String
+  insuranceCompany String
+  policyNumber     String
+  claimAmount      Float
+  status           String   @default("Pending") // Pending, Approved, Rejected
+  submittedAt      DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  patient          Patient  @relation(fields: [patientId], references: [id])
+}
+
+model Referral {
+  id          String   @id @default(cuid())
+  patientId   String
+  referredBy  String   // User ID
+  referredTo  String   // External Doctor / Hospital
+  reason      String
+  status      String   @default("Pending")
+  date        DateTime @default(now())
+
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  doctor      User     @relation(fields: [referredBy], references: [id])
+}
+
+// === NEW PHASE 5 MODELS ===
+
+model Branch {
+  id          String   @id @default(cuid())
+  name        String
+  location    String
+  contactNum  String
+  head        String?
+  createdAt   DateTime @default(now())
+}
+
+model Certificate {
+  id          String   @id @default(cuid())
+  patientName String
+  type        String   // Birth, Death, Medical, Discharge
+  issueDate   DateTime @default(now())
+  issuedBy    String   // Doctor/Staff Name
+  notes       String?
+}
+
+model LiveConsultation {
+  id          String   @id @default(cuid())
+  patientName String
+  doctorName  String
+  date        DateTime
+  meetingLink String
+  status      String   @default("Scheduled") // Scheduled, Completed, Cancelled
+  createdAt   DateTime @default(now())
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  title       String
+  type        String   // PDF, DOCX, etc.
+  url         String
+  uploadedBy  String   // Staff Name
+  uploadedAt  DateTime @default(now())
+}
+
+model BirthRecord {
+  id          String   @id @default(cuid())
+  childName   String
+  gender      String
+  weight      Float
+  birthDate   DateTime
+  motherName  String
+  fatherName  String
+  doctorName  String
+  createdAt   DateTime @default(now())
+}
+
+model DeathRecord {
+  id          String   @id @default(cuid())
+  patientName String
+  age         Int
+  gender      String
+  deathDate   DateTime
+  cause       String
+  doctorName  String
+  createdAt   DateTime @default(now())
 }

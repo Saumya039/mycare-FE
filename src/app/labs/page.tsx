@@ -82,7 +82,7 @@ export default function LabsPage() {
           <p className="text-slate-400">Order tests and track pathology results</p>
         </div>
 
-        {(session.user.role === "ADMIN" || session.user.role === "DOCTOR") && (
+        {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["DOCTOR", "SUPER_ADMIN"].includes(session.user.role)) && (
           <button 
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white px-5 py-2.5 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all font-medium"
@@ -141,7 +141,7 @@ export default function LabsPage() {
                       {lab.resultText || "—"}
                     </td>
                     <td className="p-4 text-right">
-                      {lab.status === "pending" && (session.user.role === "ADMIN" || session.user.role === "NURSE") && (
+                      {lab.status === "pending" && (["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["NURSE", "SUPER_ADMIN"].includes(session.user.role)) && (
                         activeResultId === lab.id ? (
                           <div className="flex items-center gap-2 justify-end">
                             <input 

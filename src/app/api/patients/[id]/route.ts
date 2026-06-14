@@ -29,7 +29,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "DOCTOR")) {
+    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN" && session.user.role !== "DOCTOR" && session.user.role !== "NURSE")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 

@@ -123,7 +123,7 @@ export default function BedsPage() {
                           <p className="text-sm font-semibold truncate text-slate-200">{bed.patient.name}</p>
                           <p className="text-xs text-slate-400 truncate">{bed.patient.patientId}</p>
                           
-                          {(session.user.role === "ADMIN" || session.user.role === "NURSE") && (
+                          {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["NURSE", "SUPER_ADMIN"].includes(session.user.role)) && (
                             <button 
                               onClick={() => handleRelease(bed.id)}
                               className="mt-3 w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs py-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors"
@@ -135,7 +135,7 @@ export default function BedsPage() {
                       ) : (
                         <div>
                           <p className="text-xs text-emerald-400 font-medium">Available</p>
-                          {(session.user.role === "ADMIN" || session.user.role === "NURSE") && (
+                          {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["NURSE", "SUPER_ADMIN"].includes(session.user.role)) && (
                             <button 
                               onClick={() => {
                                 setSelectedBed(bed.id)

@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "NURSE")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN" && session.user.role !== "NURSE")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
     const body = await req.json()
     const { bloodGroup, volumeMl, expiryDate } = body

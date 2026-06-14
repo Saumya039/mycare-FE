@@ -86,7 +86,7 @@ export default function BloodBankPage() {
           <p className="text-slate-400">Manage blood inventory and transfusions</p>
         </div>
 
-        {(session.user.role === "ADMIN" || session.user.role === "NURSE") && (
+        {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["NURSE", "SUPER_ADMIN"].includes(session.user.role)) && (
           <button 
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-5 py-2.5 rounded-xl shadow-[0_0_15px_rgba(225,29,72,0.3)] transition-all font-medium"
@@ -129,7 +129,7 @@ export default function BloodBankPage() {
                 <th className="p-4 font-medium">Collection Date</th>
                 <th className="p-4 font-medium">Expiry Date</th>
                 <th className="p-4 font-medium">Status</th>
-                {(session.user.role === "ADMIN" || session.user.role === "NURSE") && <th className="p-4 font-medium text-right">Actions</th>}
+                {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["NURSE", "SUPER_ADMIN"].includes(session.user.role)) && <th className="p-4 font-medium text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
@@ -152,7 +152,7 @@ export default function BloodBankPage() {
                         {bag.status.toUpperCase()}
                       </span>
                     </td>
-                    {(session.user.role === "ADMIN" || session.user.role === "NURSE") && (
+                    {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["NURSE", "SUPER_ADMIN"].includes(session.user.role)) && (
                       <td className="p-4 text-right">
                         {bag.status === "available" && (
                           <div className="flex items-center justify-end gap-2">

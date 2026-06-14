@@ -81,7 +81,7 @@ export default function AmbulancesPage() {
           <p className="text-slate-400">Manage emergency vehicle fleet and dispatch operations</p>
         </div>
 
-        {(session.user.role === "ADMIN" || session.user.role === "NURSE") && (
+        {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["NURSE", "SUPER_ADMIN"].includes(session.user.role)) && (
           <button 
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-5 py-2.5 rounded-xl shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-all font-medium"
@@ -167,7 +167,7 @@ export default function AmbulancesPage() {
                   </div>
                 </div>
 
-                {(session.user.role === "ADMIN" || session.user.role === "NURSE") && (
+                {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["NURSE", "SUPER_ADMIN"].includes(session.user.role)) && (
                   <div className="pt-4 border-t border-slate-800 flex gap-2">
                     {amb.status === "available" ? (
                       <>

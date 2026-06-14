@@ -36,6 +36,10 @@ export async function POST(req: Request) {
       select: { patientId: true, date: true, reason: true, doctor: { select: { name: true } } }
     })
 
+    const invoices = await prisma.invoice.findMany({
+      select: { id: true, totalAmount: true, status: true, insuranceClaimStatus: true, dueDate: true, patient: { select: { name: true } } }
+    })
+
     const systemPrompt = `You are Serva AI, the intelligent virtual assistant integrated into the Sevra Technologies Hospital Management System. 
 You are currently talking to ${session.user.name}, who is a ${session.user.role}.
 Here is the LIVE data from the hospital database right now:
@@ -44,12 +48,14 @@ Here is the LIVE data from the hospital database right now:
 - Admitted Patients: ${JSON.stringify(patients)}
 - Pharmacy Inventory: ${JSON.stringify(inventory)}
 - Upcoming Appointments: ${JSON.stringify(appointments)}
+- Financial & Revenue Data (Invoices): ${JSON.stringify(invoices)}
 
 Rules:
 1. Be concise, professional, and helpful.
-2. If asked about patients, inventory, or appointments, use the real live data provided above. Do not hallucinate data.
-3. If asked to write a Discharge Summary for a patient, write a professional medical summary based on their diagnosis.
-4. Keep answers under 3-4 short paragraphs so they fit well in the chat UI.`
+2. You have FULL ACCESS to all financial, billing, and revenue data. Do NOT say you cannot access financial data. If asked about revenue or finances, use the Invoice data to calculate totals, overdues, and revenue.
+3. If asked about patients, inventory, or appointments, use the real live data provided above. Do not hallucinate data.
+4. If asked to write a Discharge Summary for a patient, write a professional medical summary based on their diagnosis.
+5. Keep answers under 3-4 short paragraphs so they fit well in the chat UI.`
 
     // Call Gemini Model
     const response = await ai.models.generateContent({

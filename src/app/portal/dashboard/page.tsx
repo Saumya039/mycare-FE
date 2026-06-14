@@ -11,12 +11,17 @@ export default function PortalDashboard() {
 
   useEffect(() => {
     const pid = localStorage.getItem("portal_patient_id")
-    if (!pid) {
+    const pin = localStorage.getItem("portal_pin")
+    if (!pid || !pin) {
       router.push("/portal/login")
       return
     }
 
-    fetch(`/api/patients/portal?patientId=${pid}`)
+    fetch("/api/patients/portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ patientId: pid, portalPin: pin })
+    })
       .then(res => {
         if (!res.ok) throw new Error("Not found")
         return res.json()
@@ -27,6 +32,7 @@ export default function PortalDashboard() {
       })
       .catch(() => {
         localStorage.removeItem("portal_patient_id")
+        localStorage.removeItem("portal_pin")
         router.push("/portal/login")
       })
   }, [router])

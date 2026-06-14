@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function GET(req: Request) {
+export async function POST(req: Request) {
   try {
-    const { searchParams } = new URL(req.url)
-    const patientId = searchParams.get("patientId")
+    const body = await req.json()
+    const { patientId, portalPin } = body
 
-    if (!patientId) {
-      return NextResponse.json({ error: "Patient ID is required" }, { status: 400 })
+    if (!patientId || !portalPin) {
+      return NextResponse.json({ error: "Patient ID and PIN are required" }, { status: 400 })
     }
 
     const patient = await prisma.patient.findUnique({
@@ -24,9 +24,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 })
     }
 
+    if (patient.portalPin !== portalPin) {
+      return NextResponse.json({ error: "Invalid PIN" }, { status: 401 })
+    }
+
     return NextResponse.json(patient)
   } catch (error) {
     console.error("Portal fetch error:", error)
     return NextResponse.json({ error: "Failed to fetch patient data" }, { status: 500 })
   }
 }
+
+// force reload

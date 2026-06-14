@@ -1,85 +1,92 @@
 "use client"
 
 import { useSession, signOut } from "next-auth/react"
-import { LogOut, Activity, Users, Settings, ShieldAlert, Sparkles, Calendar } from "lucide-react"
+import { LogOut, Activity, Users, Settings, ShieldAlert, Sparkles, Calendar, Sun, Moon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { ServaAIPanel } from "./ServaAIPanel"
+import { useTheme } from "./ThemeProvider"
+
+import Image from "next/image"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
-  const pathname = usePathname()
+  const pathname = usePathname() || ""
   const [isAIOpen, setIsAIOpen] = useState(false)
+  const { theme, setTheme } = useTheme()
 
-  if (status === "loading") return <div className="h-screen bg-slate-950 flex items-center justify-center text-cyan-400">Loading...</div>
-  if (!session) return <>{children}</>
+  if (status === "loading") {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center">Loading...</div>
+  }
 
-  const role = session.user.role
-  const isPortal = pathname.startsWith("/portal")
-
-  if (isPortal) {
+  // Allow login page and patient portal to render without a session
+  if (pathname === "/login" || pathname.startsWith("/portal")) {
     return <>{children}</>
   }
 
+  if (!session) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center">Redirecting...</div>
+  }
+
+  const role = session.user.role
+
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-800 bg-slate-900/50 flex flex-col">
-        <div className="p-6 border-b border-slate-800">
-          <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
-            Sevra Technologies
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">Serva AI System</p>
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-500">
+      
+      {/* Sidebar Navigation */}
+      <aside className="w-64 bg-white dark:bg-[#0b1437] border-r border-slate-200 dark:border-slate-800 flex flex-col transition-colors duration-500 z-30">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-cyan-500/30">
+              <Image src="/logo.jpg" alt="Sevra AI Logo" fill className="object-cover" />
+            </div>
+            <div>
+              <h1 className="font-bold text-lg text-slate-800 dark:text-slate-100 tracking-tight">Sevra AI</h1>
+              <p className="text-[10px] text-slate-500 tracking-widest uppercase">Enterprise System</p>
+            </div>
+          </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <Link href="/" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-            <Activity className="w-5 h-5" /> Dashboard
-          </Link>
-          
-          {(role === "ADMIN" || role === "DOCTOR" || role === "NURSE") && (
-            <>
-              <Link href="/patients" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/patients" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-                <Users className="w-5 h-5" /> Patients
-              </Link>
-              <Link href="/beds" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/beds" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-                <Activity className="w-5 h-5" /> Bed Management
-              </Link>
-              <Link href="/monitoring" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/monitoring" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-                <Activity className="w-5 h-5" /> Live Telemetry
-              </Link>
-              <Link href="/appointments" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/appointments" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-                <Calendar className="w-5 h-5" /> Appointments
-              </Link>
-              <Link href="/staff" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/staff" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-                <Users className="w-5 h-5" /> Staff Directory
-              </Link>
-              <Link href="/inventory" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/inventory" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-                <Activity className="w-5 h-5" /> Pharmacy
-              </Link>
-              <Link href="/labs" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/labs" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-                <Activity className="w-5 h-5" /> Labs & Diagnostics
-              </Link>
-              <Link href="/blood-bank" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/blood-bank" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-                <Activity className="w-5 h-5" /> Blood Bank
-              </Link>
-              <Link href="/ambulances" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/ambulances" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-                <Activity className="w-5 h-5" /> Ambulance Dispatch
-              </Link>
-              {role === "ADMIN" && (
-                <Link href="/billing" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/billing" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-                  <Activity className="w-5 h-5" /> Billing & Finance
-                </Link>
-              )}
-            </>
-          )}
-
-          {role === "ADMIN" && (
-            <Link href="/settings" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === "/settings" ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}>
-              <Settings className="w-5 h-5" /> System Config
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
+          {[
+            { name: "Dashboard", icon: Activity, href: "/", roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE", "ACCOUNTANT", "RECEPTIONIST", "PHARMACIST", "PATHOLOGIST", "RADIOLOGIST"] },
+            { name: "Patient", icon: Users, href: "/patients", roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST"] },
+            { name: "Billing", icon: Activity, href: "/billing", roles: ["SUPER_ADMIN", "ADMIN", "ACCOUNTANT"] },
+            { name: "Appointment", icon: Calendar, href: "/appointments", roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "RECEPTIONIST"] },
+            { name: "OPD - Out Patient", icon: Activity, href: "/opd", roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE"] },
+            { name: "IPD - In Patient", icon: Activity, href: "/ipd", roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE"] },
+            { name: "Pharmacy", icon: Activity, href: "/pharmacy", roles: ["SUPER_ADMIN", "ADMIN", "PHARMACIST"] },
+            { name: "Pathology", icon: Activity, href: "/pathology", roles: ["SUPER_ADMIN", "ADMIN", "PATHOLOGIST"] },
+            { name: "Radiology", icon: Activity, href: "/radiology", roles: ["SUPER_ADMIN", "ADMIN", "RADIOLOGIST"] },
+            { name: "Blood Bank", icon: Activity, href: "/blood-bank", roles: ["SUPER_ADMIN", "ADMIN", "PATHOLOGIST"] },
+            { name: "Ambulance", icon: Activity, href: "/ambulances", roles: ["SUPER_ADMIN", "ADMIN", "RECEPTIONIST"] },
+            { name: "Front Office", icon: Activity, href: "/front-office", roles: ["SUPER_ADMIN", "ADMIN", "RECEPTIONIST"] },
+            { name: "Birth & Death Record", icon: Activity, href: "/records", roles: ["SUPER_ADMIN", "ADMIN"] },
+            { name: "Multi Branch", icon: Activity, href: "/branches", roles: ["SUPER_ADMIN"] },
+            { name: "Human Resource", icon: Users, href: "/hr", roles: ["SUPER_ADMIN", "ADMIN"] },
+            { name: "QR Code Attendance", icon: Activity, href: "/attendance", roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST", "ACCOUNTANT", "PHARMACIST", "PATHOLOGIST", "RADIOLOGIST"] },
+            { name: "Duty Roster", icon: Activity, href: "/roster", roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST", "ACCOUNTANT", "PHARMACIST", "PATHOLOGIST", "RADIOLOGIST"] },
+            { name: "Annual Calendar", icon: Calendar, href: "/calendar", roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST", "ACCOUNTANT", "PHARMACIST", "PATHOLOGIST", "RADIOLOGIST"] },
+            { name: "Referral", icon: Activity, href: "/referral", roles: ["SUPER_ADMIN", "ADMIN", "RECEPTIONIST"] },
+            { name: "TPA Management", icon: Activity, href: "/tpa", roles: ["SUPER_ADMIN", "ADMIN", "ACCOUNTANT"] },
+            { name: "Finance", icon: Activity, href: "/finance", roles: ["SUPER_ADMIN", "ADMIN", "ACCOUNTANT"] },
+            { name: "Messaging", icon: Activity, href: "/messaging", roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST", "ACCOUNTANT", "PHARMACIST", "PATHOLOGIST", "RADIOLOGIST"] },
+            { name: "Inventory", icon: Activity, href: "/inventory", roles: ["SUPER_ADMIN", "ADMIN", "PHARMACIST"] },
+            { name: "Download Center", icon: Activity, href: "/downloads", roles: ["SUPER_ADMIN", "ADMIN"] },
+            { name: "Certificate", icon: Activity, href: "/certificates", roles: ["SUPER_ADMIN", "ADMIN", "RECEPTIONIST"] },
+            { name: "Live Consultation", icon: Activity, href: "/consultation", roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR"] },
+            { name: "Reports", icon: Activity, href: "/reports", roles: ["SUPER_ADMIN", "ADMIN", "ACCOUNTANT", "DOCTOR"] },
+            { name: "Setup", icon: Settings, href: "/settings", roles: ["SUPER_ADMIN", "ADMIN"] }
+          ].filter(item => item.roles.includes(role)).map((item) => (
+            <Link 
+              key={item.name}
+              href={item.href} 
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === item.href ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}
+            >
+              <item.icon className="w-4 h-4" /> {item.name}
             </Link>
-          )}
+          ))}
         </nav>
 
         <div className="p-4 border-t border-slate-800">
@@ -102,28 +109,32 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto">
-        <header className="h-16 border-b border-slate-800 flex items-center px-8 bg-slate-950/80 backdrop-blur-md sticky top-0 z-10">
-          <h2 className="text-lg font-semibold capitalize">
-            {pathname === "/" ? `Welcome back, ${session.user.name}` : pathname.replace("/", "")}
-          </h2>
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto custom-scrollbar relative">
+        <header className="h-16 flex items-center justify-between px-8 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl sticky top-0 z-20 border-b border-slate-200/50 dark:border-slate-800/50 transition-colors duration-500">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold capitalize text-slate-800 dark:text-slate-100 tracking-tight">
+              {pathname === "/" ? "Hospital Command Center" : pathname.replace("/", "").replace("-", " ")}
+            </h2>
+            <div className="hidden md:flex h-6 w-px bg-slate-300 dark:bg-slate-700 mx-2"></div>
+            <p className="hidden md:block text-sm text-slate-500 dark:text-slate-400">
+              {pathname === "/" ? `Welcome back, ${session.user.name}. Here is today's overview.` : "Enterprise System Workspace"}
+            </p>
+          </div>
           
-          <div className="ml-auto flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsAIOpen(true)}
-              className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-cyan-500/30 text-cyan-400 px-4 py-1.5 rounded-full text-sm font-medium transition-all shadow-[0_0_10px_rgba(6,182,212,0.1)]"
+              className="group flex items-center gap-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 px-4 py-1.5 rounded-full text-sm font-medium transition-all shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.3)]"
             >
-              <Sparkles className="w-4 h-4" /> Ask Serva AI
+              <Sparkles className="w-4 h-4 group-hover:animate-pulse" /> Ask Sevra AI
             </button>
 
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide flex items-center gap-2
-              ${role === 'ADMIN' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : ''}
-              ${role === 'DOCTOR' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : ''}
-              ${role === 'NURSE' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : ''}
-            `}>
-              {role === 'ADMIN' && <ShieldAlert className="w-3 h-3" />}
-              {role} ACCESS
-            </span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#111c44] border border-slate-200 dark:border-[#1e293b]">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="text-xs font-semibold tracking-wide text-slate-600 dark:text-slate-300">
+                {role.replace('_', ' ')}
+              </span>
+            </div>
           </div>
         </header>
 

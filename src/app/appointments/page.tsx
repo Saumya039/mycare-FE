@@ -97,7 +97,7 @@ export default function AppointmentsPage() {
           <p className="text-slate-400">Manage patient consultations, surgeries, and follow-ups</p>
         </div>
 
-        {(session.user.role === "ADMIN" || session.user.role === "NURSE") && (
+        {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["NURSE", "SUPER_ADMIN"].includes(session.user.role)) && (
           <button 
             onClick={() => setIsScheduleModalOpen(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all"
@@ -147,7 +147,7 @@ export default function AppointmentsPage() {
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize border ${apt.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : apt.status === 'cancelled' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-purple-500/10 text-purple-400 border-purple-500/20'}`}>
                           {apt.status}
                         </span>
-                        {(session.user.role === "ADMIN" || session.user.role === "NURSE" || session.user.role === "DOCTOR") && (
+                        {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["NURSE", "SUPER_ADMIN"].includes(session.user.role) || ["DOCTOR", "SUPER_ADMIN"].includes(session.user.role)) && (
                           <button 
                             onClick={() => {
                               setEditApt({ id: apt.id, date: localIsoStr, reason: apt.reason, status: apt.status, isFollowUp: apt.isFollowUp || false })

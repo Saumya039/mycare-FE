@@ -90,7 +90,7 @@ export default function BillingPage() {
           <p className="text-slate-400">Generate patient invoices and track payments</p>
         </div>
 
-        {session.user.role === "ADMIN" && (
+        {["ADMIN", "SUPER_ADMIN"].includes(session.user.role) && (
           <button 
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white px-5 py-2.5 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all font-medium"
@@ -122,7 +122,7 @@ export default function BillingPage() {
                 <th className="p-4 font-medium">Insurance</th>
                 <th className="p-4 font-medium">Due Date</th>
                 <th className="p-4 font-medium">Status</th>
-                {session.user.role === "ADMIN" && <th className="p-4 font-medium text-right">Actions</th>}
+                {["ADMIN", "SUPER_ADMIN"].includes(session.user.role) && <th className="p-4 font-medium text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
@@ -152,7 +152,7 @@ export default function BillingPage() {
                         {inv.status.toUpperCase()}
                       </span>
                     </td>
-                    {session.user.role === "ADMIN" && (
+                    {["ADMIN", "SUPER_ADMIN"].includes(session.user.role) && (
                       <td className="p-4 text-right">
                         {inv.status !== "paid" && (
                           <button 

@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "DOCTOR")) {
+    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN" && session.user.role !== "DOCTOR" && session.user.role !== "RECEPTIONIST")) {
       return NextResponse.json({ error: "Forbidden: Insufficient privileges" }, { status: 403 })
     }
 

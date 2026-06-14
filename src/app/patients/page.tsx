@@ -181,7 +181,7 @@ export default function PatientsPage() {
           <p className="text-slate-400">Manage hospital admissions and patient records</p>
         </div>
 
-        {(session.user.role === "ADMIN" || session.user.role === "DOCTOR") && (
+        {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["DOCTOR", "SUPER_ADMIN"].includes(session.user.role)) && (
           <button 
             onClick={() => { setIsModalOpen(true); setFormStep(1); }}
             className="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all"

@@ -132,7 +132,7 @@ export default function EHRPage({ params }: { params: Promise<{ id: string }> })
           </p>
         </div>
 
-        {session.user.role === "DOCTOR" && (
+        {["DOCTOR", "SUPER_ADMIN"].includes(session.user.role) && (
           <div className="flex items-center gap-3">
             <button 
               onClick={() => router.push('/labs')}
@@ -280,7 +280,7 @@ export default function EHRPage({ params }: { params: Promise<{ id: string }> })
               <p className="text-sm text-slate-500 mb-4">No discharge ETA set by doctor.</p>
             )}
             
-            {(session.user.role === "ADMIN" || session.user.role === "DOCTOR") && (
+            {(["ADMIN", "SUPER_ADMIN"].includes(session.user.role) || ["DOCTOR", "SUPER_ADMIN"].includes(session.user.role)) && (
               <div className="flex gap-2">
                 <input 
                   type="date" 

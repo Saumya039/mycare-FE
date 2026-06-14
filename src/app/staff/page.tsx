@@ -141,7 +141,7 @@ export default function StaffPage() {
           <p className="text-slate-400">Manage hospital personnel, roles, and shift schedules</p>
         </div>
 
-        {session.user.role === "ADMIN" && (
+        {["ADMIN", "SUPER_ADMIN"].includes(session.user.role) && (
           <button 
             onClick={() => setAddModalOpen(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all"
@@ -203,7 +203,7 @@ export default function StaffPage() {
                   )}
                 </div>
 
-                {session.user.role === "ADMIN" && (
+                {["ADMIN", "SUPER_ADMIN"].includes(session.user.role) && (
                   <div className="mt-6 pt-4 border-t border-slate-800 flex gap-2">
                     <button 
                       onClick={() => {
