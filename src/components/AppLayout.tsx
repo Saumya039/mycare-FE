@@ -6,7 +6,7 @@ import { auth } from "@/lib/firebase"
 import { LogOut, Activity, Users, Settings, ShieldAlert, Sparkles, Calendar, Sun, Moon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ServaAIPanel } from "./ServaAIPanel"
 import { useTheme } from "./ThemeProvider"
 
