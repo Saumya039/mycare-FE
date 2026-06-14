@@ -35,8 +35,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>
   }
 
+  useEffect(() => {
+    if (status === "unauthenticated" && pathname !== "/login" && !pathname.startsWith("/portal")) {
+      router.push("/login")
+    }
+  }, [status, pathname, router])
+
+  if (status === "unauthenticated" && pathname !== "/login" && !pathname.startsWith("/portal")) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Redirecting to login...</div>
+  }
+
   if (!session) {
-    return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Redirecting...</div>
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Authenticating...</div>
   }
 
   const role = session.user.role
