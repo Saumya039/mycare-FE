@@ -18,13 +18,13 @@ interface ThemeContextType {
 }
 
 const ThemeContext = React.createContext<ThemeContextType>({
-  theme: "dark",
+  theme: "light",
   setTheme: () => null,
 })
 
 export const useTheme = () => React.useContext(ThemeContext)
 
-export function ThemeProvider({ children, defaultTheme = "dark" }: ThemeProviderProps) {
+export function ThemeProvider({ children, defaultTheme = "light" }: ThemeProviderProps) {
   const [theme, setThemeState] = React.useState<Theme>(defaultTheme)
   const [mounted, setMounted] = React.useState(false)
 
@@ -40,11 +40,11 @@ export function ThemeProvider({ children, defaultTheme = "dark" }: ThemeProvider
     if (!mounted) return
     const root = window.document.documentElement
     
-    // Enforce strict dark mode
-    root.classList.add("dark")
-    root.classList.remove("light")
+    // Enforce strict light mode
+    root.classList.add("light")
+    root.classList.remove("dark")
     
-    localStorage.setItem("theme", "dark")
+    localStorage.setItem("theme", "light")
   }, [mounted])
 
   return (

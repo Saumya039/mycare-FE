@@ -17,7 +17,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme()
 
   if (status === "loading") {
-    return <div className="min-h-screen bg-slate-950 flex items-center justify-center">Loading...</div>
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Loading...</div>
   }
 
   // Allow login page and patient portal to render without a session
@@ -26,23 +26,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   if (!session) {
-    return <div className="min-h-screen bg-slate-950 flex items-center justify-center">Redirecting...</div>
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Redirecting...</div>
   }
 
   const role = session.user.role
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-500">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-50 overflow-hidden transition-colors duration-500">
       
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-white dark:bg-[#0b1437] border-r border-slate-200 dark:border-slate-800 flex flex-col transition-colors duration-500 z-30">
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+      <aside className="w-64 bg-white dark:bg-[#0b1437] border-r border-slate-200 dark:border-slate-200 flex flex-col transition-colors duration-500 z-30">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-200">
           <div className="flex items-center gap-3">
             <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-cyan-500/30">
               <Image src="/logo.jpg" alt="Sevra AI Logo" fill className="object-cover" />
             </div>
             <div>
-              <h1 className="font-bold text-lg text-slate-800 dark:text-slate-100 tracking-tight">Sevra AI</h1>
+              <h1 className="font-bold text-lg text-slate-800 dark:text-slate-900 tracking-tight">Sevra AI</h1>
               <p className="text-[10px] text-slate-500 tracking-widest uppercase">Enterprise System</p>
             </div>
           </div>
@@ -82,26 +82,26 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <Link 
               key={item.name}
               href={item.href} 
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === item.href ? "bg-cyan-500/10 text-cyan-400" : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"}`}
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === item.href ? "bg-[#0d6efd] text-white shadow-md shadow-blue-500/20" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"}`}
             >
               <item.icon className="w-4 h-4" /> {item.name}
             </Link>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 px-4 py-3 bg-slate-800/50 rounded-xl mb-4">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-500 flex items-center justify-center font-bold text-sm">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-200">
+          <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-slate-50 rounded-xl mb-4 border border-slate-100 dark:border-slate-300">
+            <div className="w-10 h-10 rounded-full bg-[#0d6efd] flex items-center justify-center font-bold text-sm text-white">
               {session.user.name?.charAt(0)}
             </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-medium truncate">{session.user.name}</p>
-              <p className="text-xs text-slate-400 truncate">{role}</p>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-900 truncate">{session.user.name}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-600 truncate">{role}</p>
             </div>
           </div>
           <button 
             onClick={() => signOut()}
-            className="flex items-center justify-center gap-2 w-full py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+            className="flex items-center justify-center gap-2 w-full py-2.5 text-sm text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
           >
             <LogOut className="w-4 h-4" /> Sign Out
           </button>
@@ -110,13 +110,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-y-auto custom-scrollbar relative">
-        <header className="h-16 flex items-center justify-between px-8 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl sticky top-0 z-20 border-b border-slate-200/50 dark:border-slate-800/50 transition-colors duration-500">
+        <header className="h-16 flex items-center justify-between px-8 bg-white dark:bg-slate-50/80 sticky top-0 z-20 border-b border-slate-200 dark:border-slate-200 transition-colors shadow-sm">
           <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold capitalize text-slate-800 dark:text-slate-100 tracking-tight">
-              {pathname === "/" ? "Hospital Command Center" : pathname.replace("/", "").replace("-", " ")}
+            <h2 className="text-lg font-bold capitalize text-slate-900 dark:text-slate-900 tracking-tight">
+              {pathname === "/" ? "Overview" : pathname.replace("/", "").replace("-", " ")}
             </h2>
-            <div className="hidden md:flex h-6 w-px bg-slate-300 dark:bg-slate-700 mx-2"></div>
-            <p className="hidden md:block text-sm text-slate-500 dark:text-slate-400">
+            <div className="hidden md:flex h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+            <p className="hidden md:block text-sm text-slate-500 dark:text-slate-600">
               {pathname === "/" ? `Welcome back, ${session.user.name}. Here is today's overview.` : "Enterprise System Workspace"}
             </p>
           </div>
@@ -124,14 +124,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsAIOpen(true)}
-              className="group flex items-center gap-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 px-4 py-1.5 rounded-full text-sm font-medium transition-all shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+              className="group flex items-center gap-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-100 dark:hover:bg-slate-700 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 px-4 py-1.5 rounded-full text-sm font-medium transition-all shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.3)]"
             >
               <Sparkles className="w-4 h-4 group-hover:animate-pulse" /> Ask Sevra AI
             </button>
 
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#111c44] border border-slate-200 dark:border-[#1e293b]">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-              <span className="text-xs font-semibold tracking-wide text-slate-600 dark:text-slate-300">
+              <span className="text-xs font-semibold tracking-wide text-slate-600 dark:text-slate-700">
                 {role.replace('_', ' ')}
               </span>
             </div>

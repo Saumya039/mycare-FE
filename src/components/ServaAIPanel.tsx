@@ -43,15 +43,15 @@ export function ServaAIPanel({ isOpen, onClose }: { isOpen: boolean, onClose: ()
   if (!isOpen) return null
 
   return (
-    <div className="fixed right-0 top-0 h-screen w-96 bg-slate-900/95 backdrop-blur-xl border-l border-slate-800 shadow-2xl z-50 flex flex-col transform transition-transform duration-300">
+    <div className="fixed right-0 top-0 h-screen w-96 bg-white/95 backdrop-blur-xl border-l border-slate-200 shadow-2xl z-50 flex flex-col transform transition-transform duration-300">
       
       {/* Header */}
-      <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
+      <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
         <div className="flex items-center gap-2 text-cyan-400">
           <Sparkles className="w-5 h-5" />
           <h2 className="font-semibold tracking-wide">Serva AI</h2>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition-colors">
+        <button onClick={onClose} className="text-slate-600 hover:text-slate-800 transition-colors">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -63,7 +63,7 @@ export function ServaAIPanel({ isOpen, onClose }: { isOpen: boolean, onClose: ()
             <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-cyan-500/20 text-cyan-400'}`}>
               {msg.role === 'user' ? <UserIcon className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
             </div>
-            <div className={`max-w-[75%] p-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none'}`}>
+            <div className={`max-w-[75%] p-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'}`}>
               {msg.text}
             </div>
           </div>
@@ -73,7 +73,7 @@ export function ServaAIPanel({ isOpen, onClose }: { isOpen: boolean, onClose: ()
             <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center flex-shrink-0">
               <Bot className="w-4 h-4" />
             </div>
-            <div className="bg-slate-800 text-slate-200 p-3 rounded-2xl rounded-tl-none text-sm flex gap-1 items-center">
+            <div className="bg-slate-100 text-slate-800 p-3 rounded-2xl rounded-tl-none text-sm flex gap-1 items-center">
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" />
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}} />
@@ -84,14 +84,14 @@ export function ServaAIPanel({ isOpen, onClose }: { isOpen: boolean, onClose: ()
       </div>
 
       {/* Input Form */}
-      <div className="p-4 border-t border-slate-800 bg-slate-950/50">
+      <div className="p-4 border-t border-slate-200 bg-slate-50/50">
         <form onSubmit={handleSend} className="relative">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask Serva about patients..."
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+            className="w-full bg-white border border-slate-300 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
             disabled={isLoading}
           />
           <button 
