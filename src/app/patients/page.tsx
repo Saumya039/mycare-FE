@@ -155,10 +155,10 @@ export default function PatientsPage() {
       if (res.ok) {
         setIsModalOpen(false)
         setFormStep(1)
-        setFormData({ 
-          name: "", age: "", gender: "Male", departmentName: "Emergency", diagnosis: "", status: "monitoring", allergies: "",
-          isMediclaimSecure: false, advanceMoneyTaken: "", isAyushmanBharat: false, insuranceCompany: "", insuranceCompanyOther: "",
-          guardianName: "", guardianRelation: "", guardianPhone: "", guardianEmail: ""
+        setFormData({
+          name: "", age: "", gender: "Male", symptoms: "", departmentName: "", diagnosis: "", status: "monitoring", allergies: "",
+          isMediclaimSecure: false, advanceMoneyTaken: "", isAyushmanBharat: false,
+          insuranceCompany: "", insuranceCompanyOther: "", guardianName: "", guardianRelation: "", guardianPhone: "", guardianEmail: ""
         })
         fetchPatients()
       } else {

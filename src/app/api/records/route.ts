@@ -13,15 +13,13 @@ export async function GET(req: Request) {
 
     if (type === "birth") {
       const records = await prisma.birthRecord.findMany({
-        include: { parent: { select: { name: true, patientId: true } } },
-        orderBy: { dateOfBirth: "desc" }
+        orderBy: { birthDate: "desc" }
       })
       const patients = await prisma.patient.findMany({ select: { id: true, name: true, patientId: true } })
       return NextResponse.json({ records, patients })
     } else {
       const records = await prisma.deathRecord.findMany({
-        include: { patient: { select: { name: true, patientId: true } } },
-        orderBy: { dateOfDeath: "desc" }
+        orderBy: { deathDate: "desc" }
       })
       const patients = await prisma.patient.findMany({ select: { id: true, name: true, patientId: true } })
       return NextResponse.json({ records, patients })
@@ -43,21 +41,25 @@ export async function POST(req: Request) {
     if (type === "birth") {
       const newRecord = await prisma.birthRecord.create({
         data: {
-          childName: data.childName,
-          gender: data.gender,
-          weight: parseFloat(data.weight),
-          dateOfBirth: new Date(data.dateOfBirth),
-          parentId: data.parentId
+          childName: data.childName || "Unknown",
+          gender: data.gender || "Unknown",
+          weight: parseFloat(data.weight) || 0,
+          birthDate: new Date(data.dateOfBirth || new Date()),
+          motherName: data.motherName || "Unknown",
+          fatherName: data.fatherName || "Unknown",
+          doctorName: session.user.name || "System"
         }
       })
       return NextResponse.json({ success: true, newRecord })
     } else if (type === "death") {
       const newRecord = await prisma.deathRecord.create({
         data: {
-          patientId: data.patientId,
-          dateOfDeath: new Date(data.dateOfDeath),
-          cause: data.cause,
-          reportedBy: data.reportedBy
+          patientName: data.patientName || "Unknown",
+          age: parseInt(data.age) || 0,
+          gender: data.gender || "Unknown",
+          deathDate: new Date(data.dateOfDeath || new Date()),
+          cause: data.cause || "Unknown",
+          doctorName: session.user.name || "System"
         }
       })
       return NextResponse.json({ success: true, newRecord })

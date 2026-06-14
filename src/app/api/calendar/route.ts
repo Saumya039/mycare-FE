@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     const userRole = session.user.role as string
     
     // Fetch appointments
-    let appointments = []
+    let appointments: any[] = []
     if (["SUPER_ADMIN", "ADMIN", "RECEPTIONIST"].includes(userRole)) {
       appointments = await prisma.appointment.findMany({
         include: { patient: { select: { name: true } }, doctor: { select: { name: true } } },
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
     }
 
     // Fetch roster shifts
-    let rosters = []
+    let rosters: any[] = []
     if (["SUPER_ADMIN", "ADMIN", "HR"].includes(userRole)) {
       rosters = await prisma.dutyRoster.findMany({
         include: { user: { select: { name: true, role: true } } },
