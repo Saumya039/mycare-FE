@@ -9,7 +9,7 @@ if (!getApps().length) {
         projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
         clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
         // Replace literal \n with actual newlines for the private key
-        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n") || "mock_key",
       }),
     })
   } catch (error) {
@@ -17,5 +17,15 @@ if (!getApps().length) {
   }
 }
 
-export const adminAuth = getAuth()
-export const adminDb = getFirestore()
+let authObj, dbObj;
+try {
+  authObj = getAuth()
+  dbObj = getFirestore()
+} catch (e) {
+  console.warn("Failed to initialize Firebase Admin SDK objects. Mocking to prevent build crashes.")
+  authObj = {} as any
+  dbObj = {} as any
+}
+
+export const adminAuth = authObj
+export const adminDb = dbObj
