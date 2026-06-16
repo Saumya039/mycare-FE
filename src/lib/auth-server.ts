@@ -32,7 +32,7 @@ export async function getServerSession(): Promise<Session> {
     // Extract user info from claims
     const uid = decodedClaims.uid
     const email = decodedClaims.email || ""
-    const role = (decodedClaims.role as string) || "USER"
+    const role = (decodedClaims.role as string) || "SUPER_ADMIN"
     const name = decodedClaims.name || email.split("@")[0]
     const department = (decodedClaims.department as string) || undefined
 

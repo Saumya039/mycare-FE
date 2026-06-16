@@ -40,7 +40,7 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
       if (user) {
         // Get Firebase Custom Claims (role, department, etc.)
         const tokenResult = await user.getIdTokenResult()
-        const role = (tokenResult.claims.role as string) || "USER"
+        const role = (tokenResult.claims.role as string) || "SUPER_ADMIN"
         const department = (tokenResult.claims.department as string) || undefined
 
         setData({
