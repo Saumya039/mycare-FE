@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { getServerSession } from "./lib/auth-server"
-
-const protectedApiRoutes = ["/api/patients", "/api/staff", "/api/appointments", "/api/invoices", "/api/billing"]
-const protectedPages = ["/", "/settings", "/reports", "/monitoring", "/billing", "/finance"]
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -36,41 +32,6 @@ export async function middleware(request: NextRequest) {
       status: 204,
       headers: requestHeaders,
     })
-  }
-
-  // Verify authentication for protected routes
-  const isProtectedApiRoute = protectedApiRoutes.some((route) => pathname.startsWith(route))
-  const isProtectedPage = protectedPages.some((page) => pathname === page || pathname.startsWith(page + "/"))
-  const isAuthPage = pathname === "/login" || pathname === "/portal/login"
-
-  if (isProtectedApiRoute || (isProtectedPage && !isAuthPage)) {
-    try {
-      const session = await getServerSession()
-
-      if (!session) {
-        // Redirect to login if accessing protected page
-        if (!pathname.startsWith("/api/")) {
-          const loginUrl = new URL("/login", request.url)
-          return NextResponse.redirect(loginUrl)
-        }
-        // Return 401 for API routes
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: requestHeaders })
-      }
-
-      // Add user info to request headers for use in API routes
-      requestHeaders.set("x-user-id", session.user.id)
-      requestHeaders.set("x-user-email", session.user.email)
-      requestHeaders.set("x-user-role", session.user.role)
-      if (session.user.department) {
-        requestHeaders.set("x-user-department", session.user.department)
-      }
-    } catch (error) {
-      console.error("Auth middleware error:", error)
-      if (!pathname.startsWith("/api/")) {
-        return NextResponse.redirect(new URL("/login", request.url))
-      }
-      return NextResponse.json({ error: "Authentication failed" }, { status: 401, headers: requestHeaders })
-    }
   }
 
   return NextResponse.next({
