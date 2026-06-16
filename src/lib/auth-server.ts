@@ -36,7 +36,7 @@ export async function getServerSession(): Promise<Session> {
       where: { email }
     })
 
-    const role = dbUser ? dbUser.role : "SUPER_ADMIN"
+    const role = dbUser ? dbUser.role : "USER"
     const name = dbUser ? dbUser.name : (decodedClaims.name || email.split("@")[0])
     const department = dbUser ? (dbUser.department || undefined) : undefined
 

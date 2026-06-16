@@ -32,15 +32,19 @@ export async function GET(request: Request) {
       }
     })
 
-    // If user is not found in Postgres but is logged in via Firebase (e.g. newly created admin)
+    // If user is not found in Postgres but is logged in via Firebase
     // we should create a record for them so the app works seamlessly
     if (!user) {
+      // Check if this is the very first user in the entire database
+      const userCount = await prisma.user.count()
+      const isFirstUser = userCount === 0
+
       user = await prisma.user.create({
         data: {
           email: email,
           name: decodedClaims.name || email.split("@")[0],
           password: "firebase-managed", // password handled by Firebase
-          role: "SUPER_ADMIN", // First time users auto-granted admin if they don't exist
+          role: isFirstUser ? "SUPER_ADMIN" : "USER", // Only first user gets admin
         },
         select: {
           id: true,
