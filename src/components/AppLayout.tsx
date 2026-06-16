@@ -23,6 +23,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     if (auth) {
       await firebaseSignOut(auth)
     }
+    // Clear backend session cookie
+    try {
+      await fetch("/api/auth/session", { method: "DELETE" })
+    } catch (e) {
+      console.error(e)
+    }
     router.push("/login")
   }
 

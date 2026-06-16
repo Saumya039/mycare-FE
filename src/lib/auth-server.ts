@@ -1,5 +1,6 @@
 import { adminAuth } from "./firebase-admin"
 import { cookies } from "next/headers"
+import prisma from "@/lib/prisma"
 
 export type SessionUser = {
   id: string
@@ -29,16 +30,19 @@ export async function getServerSession(): Promise<Session> {
     // Verify the session cookie with Firebase Admin SDK
     const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true)
 
-    // Extract user info from claims
-    const uid = decodedClaims.uid
+    // Look up user in database to get their true role
     const email = decodedClaims.email || ""
-    const role = (decodedClaims.role as string) || "SUPER_ADMIN"
-    const name = decodedClaims.name || email.split("@")[0]
-    const department = (decodedClaims.department as string) || undefined
+    const dbUser = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    const role = dbUser ? dbUser.role : "SUPER_ADMIN"
+    const name = dbUser ? dbUser.name : (decodedClaims.name || email.split("@")[0])
+    const department = dbUser ? (dbUser.department || undefined) : undefined
 
     return {
       user: {
-        id: uid,
+        id: decodedClaims.uid,
         email,
         role,
         name,

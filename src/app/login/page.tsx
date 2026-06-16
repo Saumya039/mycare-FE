@@ -61,26 +61,42 @@ export default function LoginPage() {
  setError("")
  }
 
- const handleLogin = async (e: React.FormEvent) => {
- e.preventDefault()
- setLoading(true)
- setError("")
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
 
- try {
- if (!auth) {
- throw new Error("Firebase auth not initialized")
- }
- 
- // Use Firebase Auth instead of NextAuth
- await signInWithEmailAndPassword(auth, email.trim(), password.trim())
- 
- router.push("/")
- } catch (err: any) {
- console.error(err)
- setError(err.message || "Invalid email or password")
- setLoading(false)
- }
- }
+    try {
+      if (!auth) {
+        throw new Error("Firebase auth not initialized")
+      }
+      
+      // Use Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password.trim())
+      
+      // Get the ID token
+      const idToken = await userCredential.user.getIdToken()
+      
+      // Send token to our backend to create a secure session cookie
+      const response = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ idToken }),
+      })
+      
+      if (!response.ok) {
+        throw new Error("Failed to create secure session")
+      }
+      
+      router.push("/")
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message || "Invalid email or password")
+      setLoading(false)
+    }
+  }
 
  return (
  <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 lg:p-12 transition-colors duration-500 relative overflow-hidden">

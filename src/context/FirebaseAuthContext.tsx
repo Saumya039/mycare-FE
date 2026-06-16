@@ -38,20 +38,44 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Get Firebase Custom Claims (role, department, etc.)
-        const tokenResult = await user.getIdTokenResult()
-        const role = (tokenResult.claims.role as string) || "SUPER_ADMIN"
-        const department = (tokenResult.claims.department as string) || undefined
-
-        setData({
-          user: {
-            id: user.uid,
-            email: user.email || "",
-            name: user.displayName || user.email?.split("@")[0] || "User",
-            role,
-            department,
+        try {
+          // Fetch the user's role and database profile from our new API
+          const response = await fetch("/api/auth/me")
+          if (response.ok) {
+            const data = await response.json()
+            setData({
+              user: {
+                id: data.user.id,
+                email: data.user.email,
+                name: data.user.name,
+                role: data.user.role,
+                department: data.user.department,
+              }
+            })
+          } else {
+            // Fallback if API fails
+            setData({
+              user: {
+                id: user.uid,
+                email: user.email || "",
+                name: user.displayName || user.email?.split("@")[0] || "User",
+                role: "SUPER_ADMIN", // Temporary safe fallback
+                department: undefined,
+              }
+            })
           }
-        })
+        } catch (error) {
+          console.error("Failed to fetch user profile", error)
+          setData({
+            user: {
+              id: user.uid,
+              email: user.email || "",
+              name: user.displayName || user.email?.split("@")[0] || "User",
+              role: "SUPER_ADMIN",
+            }
+          })
+        }
+        
         setStatus("authenticated")
       } else {
         setData(null)
