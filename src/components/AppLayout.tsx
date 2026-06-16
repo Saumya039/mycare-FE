@@ -26,6 +26,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     router.push("/login")
   }
 
+  useEffect(() => {
+    if (status === "unauthenticated" && pathname !== "/login" && !pathname.startsWith("/portal")) {
+      router.push("/login")
+    }
+  }, [status, pathname, router])
+
   if (status === "loading") {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Loading...</div>
   }
@@ -34,12 +40,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   if (pathname === "/login" || pathname.startsWith("/portal")) {
     return <>{children}</>
   }
-
-  useEffect(() => {
-    if (status === "unauthenticated" && pathname !== "/login" && !pathname.startsWith("/portal")) {
-      router.push("/login")
-    }
-  }, [status, pathname, router])
 
   if (status === "unauthenticated" && pathname !== "/login" && !pathname.startsWith("/portal")) {
     return <div className="min-h-screen bg-slate-50 flex items-center justify-center">Redirecting to login...</div>
