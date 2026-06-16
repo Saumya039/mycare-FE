@@ -59,11 +59,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="p-6 border-b border-slate-200 dark:border-slate-200">
           <div className="flex items-center gap-3">
             <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-cyan-500/30">
-              <Image src="/logo.jpg" alt="Sevra AI Logo" fill className="object-cover" />
+              <Image src="/logo.jpg" alt="SEVRA Logo" fill className="object-cover" />
             </div>
             <div>
-              <h1 className="font-bold text-lg text-slate-800 dark:text-slate-900 tracking-tight">Sevra AI</h1>
-              <p className="text-[10px] text-slate-500 tracking-widest uppercase">Enterprise System</p>
+              <h1 className="font-bold text-lg text-slate-800 dark:text-slate-900 tracking-tight">SEVRA</h1>
+              <p className="text-[10px] text-slate-500 tracking-widest uppercase">Management System</p>
             </div>
           </div>
         </div>
@@ -136,8 +136,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               {pathname === "/" ? "Overview" : pathname.replace("/", "").replace("-", " ")}
             </h2>
             <div className="hidden md:flex h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
-            <p className="hidden md:block text-sm text-slate-500 dark:text-slate-600">
-              {pathname === "/" ? `Welcome back, ${session.user.name}. Here is today's overview.` : "Enterprise System Workspace"}
+            <p className="hidden md:block text-sm text-slate-500 dark:text-slate-400">
+              {pathname === "/" ? `Welcome back, ${session.user.name}. Here is today's overview.` : "SEVRA Management System Workspace"}
             </p>
           </div>
           
@@ -146,7 +146,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               onClick={() => setIsAIOpen(true)}
               className="group flex items-center gap-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-100 dark:hover:bg-slate-700 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 px-4 py-1.5 rounded-full text-sm font-medium transition-all shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.3)]"
             >
-              <Sparkles className="w-4 h-4 group-hover:animate-pulse" /> Ask Sevra AI
+              <Sparkles className="w-4 h-4 group-hover:animate-pulse" /> Ask SEVRA
             </button>
 
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#111c44] border border-slate-200 dark:border-[#1e293b]">

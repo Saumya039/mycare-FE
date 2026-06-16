@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
- title: "Sevra AI — Enterprise System",
+ title: "SEVRA Management System",
  description: "Next-generation intelligent hospital management system",
 }
 

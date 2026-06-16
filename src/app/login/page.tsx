@@ -5,6 +5,7 @@ import { auth } from "@/lib/firebase"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { useTheme } from "@/components/ThemeProvider"
 import { Shield, ShieldCheck, Stethoscope, Calculator, UserPlus, Pill, Microscope, Radiation, Bed, ArrowLeft, Loader2, Lock, Mail, Sun, Moon, BrainCircuit } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -115,9 +116,11 @@ export default function LoginPage() {
       transition={{ duration: 0.8, type: "spring" }}
       className="z-10 flex flex-col items-center transition-transform hover:scale-110 duration-300"
     >
-      <BrainCircuit className="w-24 h-24 text-cyan-400 mb-4 drop-shadow-[0_0_25px_rgba(6,182,212,0.6)]" />
-      <h3 className="text-white font-bold tracking-[0.2em] text-2xl drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">SEVRA AI</h3>
-      <p className="text-cyan-500/80 text-xs tracking-widest uppercase mt-2 font-medium">Enterprise System</p>
+      <div className="relative w-24 h-24 mb-6">
+        <Image src="/logo.jpg" alt="SEVRA Logo" fill className="object-cover rounded-full shadow-[0_0_30px_rgba(6,182,212,0.3)]" />
+      </div>
+      <h3 className="text-white font-bold tracking-[0.2em] text-2xl drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">SEVRA</h3>
+      <p className="text-cyan-500/80 text-xs tracking-widest uppercase mt-2 font-medium">Management System</p>
     </motion.div>
   </div>
 
