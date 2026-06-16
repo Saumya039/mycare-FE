@@ -1,6 +1,6 @@
 import { adminAuth } from "./firebase-admin"
 import { cookies } from "next/headers"
-import prisma from "@/lib/prisma"
+import { prisma } from "@/lib/prisma"
 
 export type SessionUser = {
   id: string

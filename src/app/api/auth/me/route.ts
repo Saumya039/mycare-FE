@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { adminAuth } from "@/lib/firebase-admin"
-import prisma from "@/lib/prisma"
+import { prisma } from "@/lib/prisma"
 import { cookies } from "next/headers"
 
 export async function GET(request: Request) {
