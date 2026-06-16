@@ -341,3 +341,22 @@ model DeathRecord {
   doctorName  String
   createdAt   DateTime @default(now())
 }
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now()) @db.Timestamptz()
+  userId      String
+  action      String
+  resource    String
+  resourceId  String?
+  changes     Json?
+  status      String
+  ipAddress   String?
+  userAgent   String?
+  details     String?
+
+  @@index([userId])
+  @@index([timestamp])
+  @@index([action])
+  @@index([resource])
+}

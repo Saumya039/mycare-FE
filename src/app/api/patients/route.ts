@@ -1,72 +1,128 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "@/lib/auth-server"
-
+import { validateRequest, validationErrorResponse } from "@/lib/validators"
+import { PatientCreateSchema } from "@/lib/validators/patient"
+import { handleApiError, AuthenticationError, AuthorizationError } from "@/lib/error-handler"
+import { requirePermission, Permission, canAccessPatient, canModifyPatient } from "@/lib/rbac"
+import { auditLog, AuditAction } from "@/lib/audit-logger"
+import { encrypt, generatePin, hashPassword } from "@/lib/encryption"
 
 export async function GET(request: Request) {
   try {
     const session = await getServerSession()
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (!session) throw new AuthenticationError()
+
+    // Get patients based on role access
+    const where: any = {}
+
+    if (session.user.role === "DOCTOR" || session.user.role === "NURSE") {
+      where.departmentName = session.user.department
     }
 
     const patients = await prisma.patient.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       include: {
         vitalSigns: {
           orderBy: { recordedAt: "desc" },
-          take: 1, // Only get the most recent vital sign
+          take: 1,
         },
       },
     })
 
+    // Audit log for sensitive data access (if admin accessing all patients)
+    if (session.user.role === "SUPER_ADMIN" || session.user.role === "ADMIN") {
+      await auditLog({
+        userId: session.user.id,
+        action: AuditAction.SENSITIVE_DATA_ACCESSED,
+        resource: "PATIENT_LIST",
+        status: "SUCCESS",
+      })
+    }
+
     return NextResponse.json(patients)
   } catch (error) {
-    console.error("Error fetching patients:", error)
-    return NextResponse.json({ error: "Failed to fetch patients" }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession()
-    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN" && session.user.role !== "DOCTOR" && session.user.role !== "RECEPTIONIST")) {
-      return NextResponse.json({ error: "Forbidden: Insufficient privileges" }, { status: 403 })
+    if (!session) throw new AuthenticationError()
+
+    // Check permission to create patient
+    requirePermission(session, Permission.CREATE_PATIENT)
+
+    // Validate request
+    const validation = await validateRequest<typeof PatientCreateSchema>(request, PatientCreateSchema)
+    if (!validation.success) {
+      return validationErrorResponse(validation.errors)
     }
 
-    const body = await request.json()
-    
-    // Generate a new Patient ID e.g., P-1002
+    const body = validation.data as any
+
+    // Generate patient ID and portal PIN
     const count = await prisma.patient.count()
     const patientId = `P-${1001 + count}`
+    const portalPin = generatePin(6)
+    const hashedPin = await hashPassword(portalPin)
 
     const newPatient = await prisma.patient.create({
       data: {
         patientId,
-        name: body.name,
-        age: parseInt(body.age),
+        name: encrypt(body.name),
+        age: body.age,
         gender: body.gender,
-        diagnosis: body.diagnosis,
-        status: body.status || "monitoring",
+        diagnosis: encrypt(body.diagnosis),
+        status: "ADMITTED",
         departmentName: body.departmentName,
         doctorName: body.doctorName,
-        allergies: body.allergies || null,
-        
-        // Phase 3 additions
-        isMediclaimSecure: body.isMediclaimSecure === true || body.isMediclaimSecure === "true",
-        advanceMoneyTaken: body.advanceMoneyTaken ? parseFloat(body.advanceMoneyTaken) : 0,
-        isAyushmanBharat: body.isAyushmanBharat === true || body.isAyushmanBharat === "true",
-        insuranceCompany: body.insuranceCompany || null,
-        guardianName: body.guardianName || null,
-        guardianRelation: body.guardianRelation || null,
-        guardianPhone: body.guardianPhone || null,
-        guardianEmail: body.guardianEmail || null,
+        allergies: body.allergies ? encrypt(body.allergies) : null,
+        isMediclaimSecure: body.isMediclaimSecure || false,
+        isAyushmanBharat: body.isAyushmanBharat || false,
+        insuranceCompany: body.insuranceCompany,
+        guardianName: body.guardianName ? encrypt(body.guardianName) : null,
+        guardianRelation: body.guardianRelation,
+        guardianPhone: body.guardianPhone,
+        guardianEmail: body.guardianEmail ? encrypt(body.guardianEmail) : null,
+        portalPin: hashedPin,
       },
     })
 
-    return NextResponse.json(newPatient, { status: 201 })
+    // Log audit event
+    await auditLog({
+      userId: session.user.id,
+      action: AuditAction.PATIENT_CREATED,
+      resource: "PATIENT",
+      resourceId: newPatient.id,
+      status: "SUCCESS",
+      details: `Created patient ${patientId}`,
+    })
+
+    // Return response WITHOUT sensitive data
+    return NextResponse.json(
+      {
+        ...newPatient,
+        portalPin, // Send unencrypted PIN only at creation time
+      },
+      { status: 201 }
+    )
   } catch (error) {
-    console.error("Error creating patient:", error)
-    return NextResponse.json({ error: "Failed to create patient" }, { status: 500 })
+    if (error instanceof AuthenticationError || error instanceof AuthorizationError) {
+      return handleApiError(error)
+    }
+
+    await auditLog({
+      userId: "unknown",
+      action: AuditAction.PATIENT_CREATED,
+      resource: "PATIENT",
+      status: "FAILURE",
+      details: error instanceof Error ? error.message : "Unknown error",
+    })
+
+    return handleApiError(error)
   }
 }
+

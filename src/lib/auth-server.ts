@@ -1,29 +1,103 @@
 import { adminAuth } from "./firebase-admin"
-// import { cookies } from "next/headers"
+import { cookies } from "next/headers"
 
-// This replaces NextAuth's getServerSession.
-// In a real production environment with Firebase, you would read a session cookie here,
-// verify it using adminAuth.verifySessionCookie(), and return the decoded claims.
-// Since we are migrating away from NextAuth and don't have cookie-based session logic
-// fully implemented yet, we return a mock session for the API routes to prevent crashing.
-export async function getServerSession() {
-  // const cookieStore = cookies()
-  // const sessionCookie = cookieStore.get('session')?.value
-  // if (!sessionCookie) return null
-  
-  // try {
-  //   const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true)
-  //   return { user: { id: decodedClaims.uid, role: decodedClaims.role, email: decodedClaims.email } }
-  // } catch (e) {
-  //   return null
-  // }
+export type SessionUser = {
+  id: string
+  email: string
+  role: string
+  name: string
+  department?: string
+}
 
-  return {
-    user: {
-      id: "firebase-mock-id",
-      email: "superadmin@sevraai.com",
-      role: "SUPER_ADMIN",
-      name: "Firebase Admin Mock"
+export type Session = {
+  user: SessionUser
+} | null
+
+/**
+ * Get the current user session from Firebase session cookie
+ * Returns null if no valid session found
+ */
+export async function getServerSession(): Promise<Session> {
+  try {
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get("__session")?.value
+
+    if (!sessionCookie) {
+      return null
     }
+
+    // Verify the session cookie with Firebase Admin SDK
+    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true)
+
+    // Extract user info from claims
+    const uid = decodedClaims.uid
+    const email = decodedClaims.email || ""
+    const role = (decodedClaims.role as string) || "USER"
+    const name = decodedClaims.name || email.split("@")[0]
+    const department = (decodedClaims.department as string) || undefined
+
+    return {
+      user: {
+        id: uid,
+        email,
+        role,
+        name,
+        department,
+      },
+    }
+  } catch (error) {
+    return null
+  }
+}
+
+/**
+ * Create a session cookie for a user (called after Firebase sign-in)
+ * This should be called from a server action or API route
+ */
+export async function createSessionCookie(idToken: string, expiresIn: number = 60 * 60 * 24 * 5) {
+  try {
+    const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn })
+    return sessionCookie
+  } catch (error) {
+    console.error("Failed to create session cookie:", error)
+    throw error
+  }
+}
+
+/**
+ * Revoke a session cookie (called on logout)
+ */
+export async function revokeSessionCookie(sessionCookie: string) {
+  try {
+    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie)
+    await adminAuth.revokeRefreshTokens(decodedClaims.uid)
+  } catch (error) {
+    console.error("Failed to revoke session:", error)
+  }
+}
+
+/**
+ * Set Firebase Custom Claims for a user (admin only)
+ * Call this after user registration to set role
+ */
+export async function setUserClaims(uid: string, claims: { role: string; department?: string; name: string }) {
+  try {
+    await adminAuth.setCustomUserClaims(uid, claims)
+  } catch (error) {
+    console.error("Failed to set user claims:", error)
+    throw error
+  }
+}
+
+/**
+ * Get a user from Firebase Auth
+ */
+export async function getUserFromAuth(uid: string) {
+  try {
+    const user = await adminAuth.getUser(uid)
+    return user
+  } catch (error) {
+    console.error("Failed to get user:", error)
+    return null
   }
 }

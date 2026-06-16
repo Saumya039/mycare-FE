@@ -9,6 +9,7 @@ type SessionUser = {
   name: string
   email: string
   role: string
+  department?: string
 }
 
 type SessionData = {
@@ -31,39 +32,24 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     if (!auth) {
-      // Firebase not configured yet
       setStatus("unauthenticated")
       return
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // In a real implementation with Firebase Custom Claims, you would fetch the role like:
-        // const tokenResult = await user.getIdTokenResult()
-        // const role = tokenResult.claims.role as string
-
-        // For this demo, we'll assign roles based on the email domain or a mock lookup since 
-        // the external database might not be fully synced with Firebase Auth yet.
-        const mockRoles: Record<string, string> = {
-          'superadmin@sevraai.com': 'SUPER_ADMIN',
-          'admin@sevraai.com': 'ADMIN',
-          'doctor@sevraai.com': 'DOCTOR',
-          'accountant@sevraai.com': 'ACCOUNTANT',
-          'receptionist@sevraai.com': 'RECEPTIONIST',
-          'pharmacist@sevraai.com': 'PHARMACIST',
-          'pathologist@sevraai.com': 'PATHOLOGIST',
-          'radiologist@sevraai.com': 'RADIOLOGIST',
-          'nurse@sevraai.com': 'NURSE'
-        }
-
-        const userRole = user.email && mockRoles[user.email] ? mockRoles[user.email] : "USER"
+        // Get Firebase Custom Claims (role, department, etc.)
+        const tokenResult = await user.getIdTokenResult()
+        const role = (tokenResult.claims.role as string) || "USER"
+        const department = (tokenResult.claims.department as string) || undefined
 
         setData({
           user: {
             id: user.uid,
             email: user.email || "",
-            name: user.displayName || "Firebase User",
-            role: userRole,
+            name: user.displayName || user.email?.split("@")[0] || "User",
+            role,
+            department,
           }
         })
         setStatus("authenticated")
