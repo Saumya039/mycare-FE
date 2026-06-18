@@ -4,6 +4,7 @@ import "./globals.css"
 import { Providers } from "@/components/providers"
 import { AppLayout } from "@/components/AppLayout"
 import { ThemeProvider } from "@/components/ThemeProvider"
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({
  variable: "--font-inter",
@@ -33,6 +34,7 @@ export default function RootLayout({
  <AppLayout>{children}</AppLayout>
  </Providers>
  </ThemeProvider>
+ <Analytics />
  </body>
  </html>
  )
