@@ -1,27 +1,23 @@
 import { NextResponse } from "next/server"
-import { adminAuth } from "@/lib/firebase-admin"
+import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
-import { cookies } from "next/headers"
 
 export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get("__session")?.value
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!sessionCookie) {
+    if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-
-    // Verify the session cookie with Firebase Admin SDK
-    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true)
     
     // Look up the user in the database
-    const email = decodedClaims.email
+    const email = user.email
     if (!email) {
       return NextResponse.json({ error: "No email in token" }, { status: 400 })
     }
 
-    let user = await prisma.user.findUnique({
+    let dbUser = await prisma.user.findUnique({
       where: { email },
       select: {
         id: true,
@@ -32,18 +28,18 @@ export async function GET(request: Request) {
       }
     })
 
-    // If user is not found in Postgres but is logged in via Firebase
+    // If user is not found in Postgres but is logged in via Supabase
     // we should create a record for them so the app works seamlessly
-    if (!user) {
+    if (!dbUser) {
       // Check if this is the very first user in the entire database
       const userCount = await prisma.user.count()
       const isFirstUser = userCount === 0
 
-      user = await prisma.user.create({
+      dbUser = await prisma.user.create({
         data: {
           email: email,
-          name: decodedClaims.name || email.split("@")[0],
-          password: "firebase-managed", // password handled by Firebase
+          name: user.user_metadata?.name || email.split("@")[0],
+          password: "supabase-managed", // password handled by Supabase
           role: isFirstUser ? "SUPER_ADMIN" : "USER", // Only first user gets admin
         },
         select: {
@@ -58,12 +54,12 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       user: {
-        id: decodedClaims.uid, // Keep Firebase UID for consistency
-        email: user.email,
-        role: user.role,
-        name: user.name,
-        department: user.department,
-        dbId: user.id
+        id: user.id, // Supabase UID
+        email: dbUser.email,
+        role: dbUser.role,
+        name: dbUser.name,
+        department: dbUser.department,
+        dbId: dbUser.id
       }
     })
   } catch (error) {

@@ -1,7 +1,6 @@
 "use client"
 
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { auth } from "@/lib/firebase"
+import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -67,28 +66,15 @@ export default function LoginPage() {
     setError("")
 
     try {
-      if (!auth) {
-        throw new Error("Firebase auth not initialized")
-      }
+      const supabase = createClient()
       
-      // Use Firebase Auth
-      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password.trim())
-      
-      // Get the ID token
-      const idToken = await userCredential.user.getIdToken()
-      
-      // Send token to our backend to create a secure session cookie
-      const response = await fetch("/api/auth/session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ idToken }),
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim()
       })
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || "Failed to create secure session")
+      if (error) {
+        throw error
       }
       
       router.push("/")

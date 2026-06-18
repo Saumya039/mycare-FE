@@ -1,8 +1,7 @@
 "use client"
 
-import { useSession } from "@/context/FirebaseAuthContext"
-import { signOut as firebaseSignOut } from "firebase/auth"
-import { auth } from "@/lib/firebase"
+import { useSession } from "@/context/SupabaseAuthContext"
+import { createClient } from "@/lib/supabase/client"
 import { LogOut, Activity, Users, Settings, ShieldAlert, Sparkles, Calendar, Sun, Moon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -20,15 +19,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme()
 
   const handleSignOut = async () => {
-    if (auth) {
-      await firebaseSignOut(auth)
-    }
-    // Clear backend session cookie
-    try {
-      await fetch("/api/auth/session", { method: "DELETE" })
-    } catch (e) {
-      console.error(e)
-    }
+    const supabase = createClient()
+    await supabase.auth.signOut()
     router.push("/login")
   }
 

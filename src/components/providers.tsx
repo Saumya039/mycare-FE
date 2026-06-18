@@ -1,8 +1,8 @@
 "use client"
 
-import { FirebaseAuthProvider } from "@/context/FirebaseAuthContext"
+import { SupabaseAuthProvider } from "@/context/SupabaseAuthContext"
 import { ReactNode } from "react"
 
 export function Providers({ children }: { children: ReactNode }) {
-  return <FirebaseAuthProvider>{children}</FirebaseAuthProvider>
+  return <SupabaseAuthProvider>{children}</SupabaseAuthProvider>
 }
