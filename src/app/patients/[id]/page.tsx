@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "@/context/SupabaseAuthContext"
+import { useSession } from "@/context/NativeAuthContext"
 import React, { useEffect, useState } from "react"
 import { FileText, Activity, Clock, Pill, Stethoscope, ChevronLeft, Shield, Users, CalendarDays, CheckCircle2 } from "lucide-react"
 import Link from "next/link"

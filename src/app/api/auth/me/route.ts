@@ -1,24 +1,23 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
+import { verifyToken } from "@/lib/jwt"
 import { prisma } from "@/lib/prisma"
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const cookieStore = await cookies()
+    const token = cookieStore.get("__session")?.value
 
-    if (authError || !user) {
+    if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     
-    // Look up the user in the database
-    const email = user.email
-    if (!email) {
-      return NextResponse.json({ error: "No email in token" }, { status: 400 })
-    }
+    // Verify our custom JWT
+    const payload = await verifyToken<any>(token)
 
-    let dbUser = await prisma.user.findUnique({
-      where: { email },
+    // Optional: Fetch latest data from database to ensure role is completely up-to-date
+    const dbUser = await prisma.user.findUnique({
+      where: { id: payload.sub },
       select: {
         id: true,
         name: true,
@@ -28,38 +27,17 @@ export async function GET(request: Request) {
       }
     })
 
-    // If user is not found in Postgres but is logged in via Supabase
-    // we should create a record for them so the app works seamlessly
     if (!dbUser) {
-      // Check if this is the very first user in the entire database
-      const userCount = await prisma.user.count()
-      const isFirstUser = userCount === 0
-
-      dbUser = await prisma.user.create({
-        data: {
-          email: email,
-          name: user.user_metadata?.name || email.split("@")[0],
-          password: "supabase-managed", // password handled by Supabase
-          role: isFirstUser ? "SUPER_ADMIN" : "USER", // Only first user gets admin
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          department: true
-        }
-      })
+      return NextResponse.json({ error: "User no longer exists" }, { status: 401 })
     }
 
     return NextResponse.json({
       user: {
-        id: user.id, // Supabase UID
+        id: dbUser.id,
         email: dbUser.email,
         role: dbUser.role,
         name: dbUser.name,
         department: dbUser.department,
-        dbId: dbUser.id
       }
     })
   } catch (error) {

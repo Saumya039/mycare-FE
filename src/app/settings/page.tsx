@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "@/context/SupabaseAuthContext"
+import { useSession } from "@/context/NativeAuthContext"
 import { Settings, Server, Database, Shield, Save } from "lucide-react"
 
 export default function SettingsPage() {

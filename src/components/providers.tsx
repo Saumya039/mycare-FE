@@ -1,8 +1,8 @@
 "use client"
 
-import { SupabaseAuthProvider } from "@/context/SupabaseAuthContext"
+import { NativeAuthProvider } from "@/context/NativeAuthContext"
 import { ReactNode } from "react"
 
 export function Providers({ children }: { children: ReactNode }) {
-  return <SupabaseAuthProvider>{children}</SupabaseAuthProvider>
+  return <NativeAuthProvider>{children}</NativeAuthProvider>
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "@/context/SupabaseAuthContext"
+import { useSession } from "@/context/NativeAuthContext"
 import { useEffect, useState } from "react"
 import { FlaskConical, Search, Plus, Loader2, CheckCircle2 } from "lucide-react"
 

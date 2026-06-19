@@ -1,7 +1,6 @@
 "use client"
 
-import { useSession } from "@/context/SupabaseAuthContext"
-import { createClient } from "@/lib/supabase/client"
+import { useSession } from "@/context/NativeAuthContext"
 import { LogOut, Activity, Users, Settings, ShieldAlert, Sparkles, Calendar, Sun, Moon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -19,9 +18,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme()
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/login")
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+      // Reload the page to clear context and let Next.js handle redirect
+      window.location.href = "/login"
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   useEffect(() => {

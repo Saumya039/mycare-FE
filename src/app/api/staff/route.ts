@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "@/lib/auth-server"
 import { z } from "zod"
-import { getAdminClient } from "@/lib/supabase/admin"
+import bcrypt from "bcryptjs"
 
 const ALL_STAFF_ROLES = ["ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST", "PHARMACIST", "PATHOLOGIST", "RADIOLOGIST", "ACCOUNTANT"]
 
@@ -71,40 +71,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User with this email already exists" }, { status: 400 })
     }
 
-    // Create Supabase Auth user
-    let supabaseUserId: string
-    try {
-      const adminClient = getAdminClient()
-      const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { name, role, department },
-      })
-
-      if (authError || !authUser.user) {
-        console.error("Supabase auth user creation failed:", authError)
-        return NextResponse.json(
-          { error: "Failed to create authentication account. Check Supabase service role configuration." },
-          { status: 500 }
-        )
-      }
-
-      supabaseUserId = authUser.user.id
-    } catch (authErr) {
-      console.error("Supabase admin client error:", authErr)
-      return NextResponse.json(
-        { error: "Auth service unavailable. Ensure SUPABASE_SERVICE_ROLE_KEY is configured." },
-        { status: 500 }
-      )
-    }
+    const hashedPassword = await bcrypt.hash(password, 10)
 
     const newStaff = await prisma.user.create({
       data: {
-        id: supabaseUserId,
         name,
         email,
-        password: "supabase-managed",
+        password: hashedPassword,
         role,
         department,
         contactInfo,

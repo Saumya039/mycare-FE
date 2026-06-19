@@ -1,4 +1,5 @@
-import { createClient } from "./supabase/server"
+import { cookies } from "next/headers"
+import { verifyToken } from "@/lib/jwt"
 import { prisma } from "@/lib/prisma"
 
 export type SessionUser = {
@@ -14,37 +15,41 @@ export type Session = {
 } | null
 
 /**
- * Get the current user session from Supabase
+ * Get the current user session from the native JWT cookie
  * Returns null if no valid session found
  */
 export async function getServerSession(): Promise<Session> {
   try {
-    const supabase = await createClient()
+    const cookieStore = await cookies()
+    const token = cookieStore.get("__session")?.value
     
-    // Get session securely from Supabase
-    const { data: { user }, error } = await supabase.auth.getUser()
-    
-    if (error || !user) {
+    if (!token) {
       return null
     }
 
-    // Look up user in database to get their true role
-    const email = user.email || ""
+    // Verify session securely using jose
+    const payload = await verifyToken<any>(token)
+    
+    if (!payload || !payload.sub) {
+      return null
+    }
+
+    // Look up user in database to get their true role (optional but secure)
     const dbUser = await prisma.user.findUnique({
-      where: { email }
+      where: { id: payload.sub }
     })
 
-    const role = dbUser ? dbUser.role : "USER"
-    const name = dbUser ? dbUser.name : (user.user_metadata?.name || email.split("@")[0])
-    const department = dbUser ? (dbUser.department || undefined) : undefined
+    if (!dbUser) {
+      return null
+    }
 
     return {
       user: {
-        id: user.id,
-        email,
-        role,
-        name,
-        department,
+        id: dbUser.id,
+        email: dbUser.email,
+        role: dbUser.role,
+        name: dbUser.name,
+        department: dbUser.department || undefined,
       },
     }
   } catch (error) {

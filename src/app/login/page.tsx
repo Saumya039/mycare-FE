@@ -1,6 +1,5 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -66,22 +65,19 @@ export default function LoginPage() {
     setError("")
 
     try {
-      if (process.env.NEXT_PUBLIC_SUPABASE_URL === "https://placeholder.supabase.co" || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-        throw new Error("Supabase is not configured. Please add your NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your .env file and restart your server.")
-      }
-
-      const supabase = createClient()
-      
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim()
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password: password.trim() })
       })
       
-      if (error) {
-        throw error
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || "Failed to authenticate")
       }
       
-      router.push("/")
+      // Reload page to redirect
+      window.location.href = "/"
     } catch (err: any) {
       console.error(err)
       setError(err.message || "Invalid email or password")
