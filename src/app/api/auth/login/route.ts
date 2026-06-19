@@ -35,6 +35,16 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
       }
     } else {
+      // One-time seamless migration for legacy Firebase/Supabase accounts
+      if (user.password === "firebase-managed" || user.password === "supabase-managed") {
+        const hashedPassword = await bcrypt.hash(password, 10)
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { password: hashedPassword }
+        })
+        user.password = hashedPassword // Update the local object so it passes
+      }
+
       // Verify password
       const passwordMatch = await bcrypt.compare(password, user.password)
       if (!passwordMatch) {
