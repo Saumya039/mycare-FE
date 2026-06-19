@@ -66,6 +66,10 @@ export default function LoginPage() {
     setError("")
 
     try {
+      if (process.env.NEXT_PUBLIC_SUPABASE_URL === "https://placeholder.supabase.co" || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        throw new Error("Supabase is not configured. Please add your NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your .env file and restart your server.")
+      }
+
       const supabase = createClient()
       
       const { error } = await supabase.auth.signInWithPassword({
