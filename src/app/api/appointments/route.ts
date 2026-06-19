@@ -1,12 +1,22 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "@/lib/auth-server"
+import { z } from "zod"
+import { requirePermission, Permission } from "@/lib/rbac"
+import { handleApiError, AuthenticationError } from "@/lib/error-handler"
 
+const AppointmentCreateSchema = z.object({
+  patientId: z.string().min(1),
+  doctorId: z.string().min(1),
+  date: z.string().min(1),
+  reason: z.string().min(1),
+  isFollowUp: z.boolean().optional(),
+})
 
 export async function GET() {
   try {
     const session = await getServerSession()
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    requirePermission(session, Permission.VIEW_APPOINTMENTS)
 
     const appointments = await prisma.appointment.findMany({
       include: {
@@ -18,39 +28,39 @@ export async function GET() {
 
     return NextResponse.json(appointments)
   } catch (error) {
-    console.error("Error fetching appointments:", error)
-    return NextResponse.json({ error: "Failed to fetch appointments" }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession()
-    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN" && session.user.role !== "NURSE")) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    requirePermission(session, Permission.CREATE_APPOINTMENT)
 
     const body = await req.json()
-    const { patientId, doctorId, date, reason, isFollowUp } = body
+    const parsed = AppointmentCreateSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Validation failed", details: parsed.error.errors }, { status: 422 })
+    }
 
-    // Find the real DB ID of the patient
+    const { patientId, doctorId, date, reason, isFollowUp } = parsed.data
+
     const patient = await prisma.patient.findUnique({ where: { patientId } })
     if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 })
 
     const appointment = await prisma.appointment.create({
       data: {
         patientId: patient.id,
-        doctorId: doctorId,
+        doctorId,
         date: new Date(date),
-        reason: reason,
+        reason,
         isFollowUp: isFollowUp || false,
         status: "scheduled"
       }
     })
 
-    return NextResponse.json(appointment)
+    return NextResponse.json(appointment, { status: 201 })
   } catch (error) {
-    console.error("Error creating appointment:", error)
-    return NextResponse.json({ error: "Failed to create appointment" }, { status: 500 })
+    return handleApiError(error)
   }
 }

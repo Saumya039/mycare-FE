@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "@/lib/auth-server"
+import { z } from "zod"
+import { requirePermission, Permission } from "@/lib/rbac"
+import { handleApiError } from "@/lib/error-handler"
 
+const LabTestCreateSchema = z.object({
+  patientId: z.string().min(1),
+  testName: z.string().min(1),
+})
 
 export async function GET() {
   try {
     const session = await getServerSession()
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    requirePermission(session, Permission.VIEW_LABS)
 
     const labs = await prisma.labTest.findMany({
       include: {
@@ -16,35 +23,40 @@ export async function GET() {
     })
     return NextResponse.json(labs)
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch labs" }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession()
-    if (!session) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    requirePermission(session, Permission.CREATE_LAB_TEST)
 
     const body = await req.json()
-    const { patientId, testName } = body
+    const parsed = LabTestCreateSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Validation failed", details: parsed.error.errors }, { status: 422 })
+    }
 
-    let dbPatientId = patientId;
+    let { patientId } = parsed.data
+    const { testName } = parsed.data
+
     if (patientId.startsWith("P-")) {
       const patient = await prisma.patient.findUnique({ where: { patientId } })
       if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 })
-      dbPatientId = patient.id
+      patientId = patient.id
     }
 
     const lab = await prisma.labTest.create({
       data: {
-        patientId: dbPatientId,
+        patientId,
         testName,
-        orderedBy: session.user.id,
+        orderedBy: session!.user.id,
         status: "pending"
       }
     })
     return NextResponse.json(lab, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: "Failed to create lab test" }, { status: 500 })
+    return handleApiError(error)
   }
 }

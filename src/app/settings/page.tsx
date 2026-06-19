@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "@/context/FirebaseAuthContext"
+import { useSession } from "@/context/SupabaseAuthContext"
 import { Settings, Server, Database, Shield, Save } from "lucide-react"
 
 export default function SettingsPage() {

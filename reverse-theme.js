@@ -1,4 +1,4 @@
-const fs = require('fs');
+commconst fs = require('fs');
 const path = require('path');
 
 const directoryPath = path.join(__dirname, 'src', 'app');

@@ -1,6 +1,6 @@
 "use client"
 
-import { useSession } from "@/context/FirebaseAuthContext"
+import { useSession } from "@/context/SupabaseAuthContext"
 import { useEffect, useState } from "react"
 import { Truck, Plus, Search, MapPin, Phone, CheckCircle2, Navigation, Loader2 } from "lucide-react"
 

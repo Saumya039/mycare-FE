@@ -1,29 +1,29 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "@/lib/auth-server"
-
+import { requirePermission, Permission } from "@/lib/rbac"
+import { handleApiError } from "@/lib/error-handler"
 
 export async function GET() {
   try {
     const session = await getServerSession()
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    requirePermission(session, Permission.VIEW_AMBULANCES)
 
     const ambulances = await prisma.ambulance.findMany({
       orderBy: { licensePlate: 'asc' }
     })
     return NextResponse.json(ambulances)
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch ambulances" }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession()
-    if (!session || session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    requirePermission(session, Permission.MANAGE_AMBULANCES)
 
-    const body = await req.json()
-    const { vehicleNumber, driverName, driverPhone, type, location } = body
+    const { vehicleNumber, driverName, driverPhone, type, location } = await req.json()
 
     const ambulance = await prisma.ambulance.create({
       data: {
@@ -37,6 +37,6 @@ export async function POST(req: Request) {
     })
     return NextResponse.json(ambulance, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: "Failed to register ambulance" }, { status: 500 })
+    return handleApiError(error)
   }
 }

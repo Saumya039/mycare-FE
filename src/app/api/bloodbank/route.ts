@@ -1,29 +1,29 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "@/lib/auth-server"
-
+import { requirePermission, Permission } from "@/lib/rbac"
+import { handleApiError } from "@/lib/error-handler"
 
 export async function GET() {
   try {
     const session = await getServerSession()
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    requirePermission(session, Permission.VIEW_BLOOD_BANK)
 
     const bags = await prisma.bloodBag.findMany({
       orderBy: { expiryDate: 'asc' }
     })
     return NextResponse.json(bags)
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch blood bank" }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession()
-    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN" && session.user.role !== "NURSE")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    requirePermission(session, Permission.MANAGE_BLOOD_BAGS)
 
-    const body = await req.json()
-    const { bloodGroup, volumeMl, expiryDate } = body
+    const { bloodGroup, volumeMl, expiryDate } = await req.json()
 
     const bag = await prisma.bloodBag.create({
       data: {
@@ -35,6 +35,6 @@ export async function POST(req: Request) {
     })
     return NextResponse.json(bag, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: "Failed to log blood bag" }, { status: 500 })
+    return handleApiError(error)
   }
 }

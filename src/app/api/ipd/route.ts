@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "@/lib/auth-server"
-
 import { prisma } from "@/lib/prisma"
+import { getServerSession } from "@/lib/auth-server"
+import { requirePermission, Permission } from "@/lib/rbac"
+import { handleApiError } from "@/lib/error-handler"
 
-export async function GET(req: Request) {
-  const session = await getServerSession()
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-
+export async function GET() {
   try {
+    const session = await getServerSession()
+    requirePermission(session, Permission.VIEW_IPD)
+
     const patients = await prisma.patient.findMany({
       where: { departmentName: "IPD" },
       orderBy: { createdAt: "desc" },
-      include: {
-        bed: true
-      }
+      include: { bed: true }
     })
 
     const beds = await prisma.bed.findMany({
@@ -22,18 +21,16 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ patients, beds })
   } catch (error) {
-    console.error("IPD GET Error:", error)
-    return NextResponse.json({ error: "Failed to fetch IPD data" }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession()
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-
   try {
-    const data = await req.json()
-    const { name, age, gender, diagnosis, doctorName, bedId } = data
+    const session = await getServerSession()
+    requirePermission(session, Permission.VIEW_IPD)
+
+    const { name, age, gender, diagnosis, doctorName, bedId } = await req.json()
 
     const patient = await prisma.patient.create({
       data: {
@@ -56,9 +53,8 @@ export async function POST(req: Request) {
       })
     }
 
-    return NextResponse.json({ patient })
+    return NextResponse.json({ patient }, { status: 201 })
   } catch (error) {
-    console.error("IPD POST Error:", error)
-    return NextResponse.json({ error: "Failed to create IPD patient" }, { status: 500 })
+    return handleApiError(error)
   }
 }

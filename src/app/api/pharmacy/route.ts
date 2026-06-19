@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "@/lib/auth-server"
-
 import { prisma } from "@/lib/prisma"
+import { getServerSession } from "@/lib/auth-server"
+import { requirePermission, Permission } from "@/lib/rbac"
+import { handleApiError } from "@/lib/error-handler"
 
-export async function GET(req: Request) {
-  const session = await getServerSession()
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-
+export async function GET() {
   try {
+    const session = await getServerSession()
+    requirePermission(session, Permission.VIEW_PHARMACY)
+
     const inventory = await prisma.inventoryItem.findMany({
       where: { category: "Medicine" },
       orderBy: { itemName: "asc" }
@@ -24,19 +25,19 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ inventory, prescriptions })
   } catch (error) {
-    console.error("Pharmacy GET Error:", error)
-    return NextResponse.json({ error: "Failed to fetch pharmacy data" }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession()
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
-
   try {
+    const session = await getServerSession()
+    requirePermission(session, Permission.VIEW_PHARMACY)
+
     const { action, prescriptionId, itemId, quantity } = await req.json()
 
     if (action === "dispense" && prescriptionId) {
+      requirePermission(session, Permission.DISPENSE_MEDICATION)
       const updated = await prisma.prescription.update({
         where: { id: prescriptionId },
         data: { status: "completed" }
@@ -45,9 +46,10 @@ export async function POST(req: Request) {
     }
 
     if (action === "restock" && itemId && quantity) {
+      requirePermission(session, Permission.RESTOCK_INVENTORY)
       const updated = await prisma.inventoryItem.update({
         where: { id: itemId },
-        data: { 
+        data: {
           quantity: { increment: parseInt(quantity) },
           lastRestocked: new Date()
         }
@@ -57,7 +59,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 })
   } catch (error) {
-    console.error("Pharmacy POST Error:", error)
-    return NextResponse.json({ error: "Failed to update pharmacy data" }, { status: 500 })
+    return handleApiError(error)
   }
 }

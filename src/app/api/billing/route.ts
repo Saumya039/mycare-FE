@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "@/lib/auth-server"
-
+import { requirePermission, Permission } from "@/lib/rbac"
+import { handleApiError } from "@/lib/error-handler"
 
 export async function GET() {
   try {
     const session = await getServerSession()
-    if (!session || session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    requirePermission(session, Permission.VIEW_INVOICES)
 
     const invoices = await prisma.invoice.findMany({
       include: {
@@ -17,21 +18,17 @@ export async function GET() {
 
     return NextResponse.json(invoices)
   } catch (error) {
-    console.error("Error fetching billing:", error)
-    return NextResponse.json({ error: "Failed to fetch invoices" }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession()
-    if (!session || session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Forbidden. Only Admins can generate invoices." }, { status: 403 })
-    }
+    requirePermission(session, Permission.CREATE_INVOICE)
 
     const { patientId, amount, dueDate, insuranceStatus } = await req.json()
 
-    // Find the real DB ID of the patient
     const patient = await prisma.patient.findUnique({ where: { patientId } })
     if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 })
 
@@ -45,9 +42,8 @@ export async function POST(req: Request) {
       }
     })
 
-    return NextResponse.json(invoice)
+    return NextResponse.json(invoice, { status: 201 })
   } catch (error) {
-    console.error("Error creating invoice:", error)
-    return NextResponse.json({ error: "Failed to create invoice" }, { status: 500 })
+    return handleApiError(error)
   }
 }
